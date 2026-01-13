@@ -57,7 +57,7 @@
 
     .card {
         background: var(--card);
-        padding: 20px;
+        padding: 14px; /* COMPATTATO */
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         animation: fadeIn 0.6s ease;
@@ -79,7 +79,16 @@
 
     canvas {
         width: 100%;
-        height: 400px;
+        height: 230px; /* ALTEZZA RIDOTTA */
+    }
+
+    .card h2 {
+        margin-bottom: 8px; /* COMPATTATO */
+        font-size: 1.1rem; /* PIÙ PICCOLO */
+    }
+
+    .card canvas {
+        margin-top: 6px; /* COMPATTATO */
     }
 
     @keyframes fadeIn {
@@ -87,7 +96,6 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Responsive per mobile */
     @media (max-width: 900px) {
         .container {
             grid-template-columns: 1fr;
@@ -102,7 +110,7 @@
         }
 
         canvas {
-            height: 300px;
+            height: 210px; /* PIÙ COMPATTO SU MOBILE */
         }
     }
 </style>
@@ -117,7 +125,6 @@
 
 <div class="container">
 
-    <!-- COLONNA SINISTRA: KPI + ALERT -->
     <div>
         <div class="card">
             <div class="kpi-label">Peso Attuale</div>
@@ -139,14 +146,12 @@
             <div id="kpi-24h" class="kpi kpi-neutral">-- g</div>
         </div>
 
-        <!-- ALERT INTELLIGENTE -->
         <div class="card" id="alert-card" style="border-left: 8px solid #3498db;">
             <div class="kpi-label">Stato Sistema</div>
             <div id="alert-text" class="kpi" style="font-size:1.4rem;">Analisi in corso...</div>
         </div>
     </div>
 
-    <!-- COLONNA DESTRA: GRAFICI -->
     <div>
         <div class="card">
             <h2>Andamento Peso (1h / 6h / 24h)</h2>
@@ -165,7 +170,6 @@
 const CHANNEL_ID = "3171602";
 const API_KEY = "JQ1UUYT4R4T83V0V";
 
-// Formattazione a due decimali
 function fmt(n) {
     return Number.parseFloat(n).toFixed(2);
 }
@@ -174,46 +178,36 @@ async function fetchData(minutes) {
     const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/fields/1.json?api_key=${API_KEY}&minutes=${minutes}&results=500`;
     const res = await fetch(url);
     const data = await res.json();
-    return data.feeds
-        .filter(f => f.field1 !== null)
-        .map(f => ({
-            t: new Date(f.created_at),
-            v: parseFloat(f.field1)
-        }));
+    return data.feeds.filter(f => f.field1 !== null).map(f => ({
+        t: new Date(f.created_at),
+        v: parseFloat(f.field1)
+    }));
 }
 
-// Dati ultimi 7 giorni
 async function fetch7Days() {
     const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/fields/1.json?api_key=${API_KEY}&days=7&results=8000`;
     const res = await fetch(url);
     const data = await res.json();
-    return data.feeds
-        .filter(f => f.field1 !== null)
-        .map(f => ({
-            t: new Date(f.created_at),
-            v: parseFloat(f.field1)
-        }));
+    return data.feeds.filter(f => f.field1 !== null).map(f => ({
+        t: new Date(f.created_at),
+        v: parseFloat(f.field1)
+    }));
 }
 
 function setKPI(id, value) {
     const el = document.getElementById(id);
     el.textContent = fmt(value) + " g";
-
     if (value > 0) el.className = "kpi kpi-positive";
     else if (value < 0) el.className = "kpi kpi-negative";
     else el.className = "kpi kpi-neutral";
 }
 
-// ALERT INTELLIGENTE
 function updateAlert(now, d1, d6, d24) {
     const alertCard = document.getElementById("alert-card");
     const alertText = document.getElementById("alert-text");
 
-    const var1 = now - d1;
-    const var6 = now - d6;
     const var24 = now - d24;
 
-    // Esempio di logica: adatta le soglie ai tuoi valori reali
     if (now < 50) {
         alertCard.style.borderLeftColor = "#e74c3c";
         alertText.textContent = "Peso troppo basso!";
@@ -233,40 +227,25 @@ function updateAlert(now, d1, d6, d24) {
 }
 
 async function updateDashboard() {
-    // Dati 1h, 6h, 24h
     const data1h = await fetchData(60);
     const data6h = await fetchData(360);
     const data24h = await fetchData(1440);
 
-    if (data1h.length === 0 || data6h.length === 0 || data24h.length === 0) {
-        console.warn("Dati insufficienti per uno dei periodi.");
-        return;
-    }
+    if (!data1h.length || !data6h.length || !data24h.length) return;
 
     const now = data1h[data1h.length - 1].v;
 
-    // KPI
     document.getElementById("kpi-now").textContent = fmt(now) + " g";
     setKPI("kpi-1h", now - data1h[0].v);
     setKPI("kpi-6h", now - data6h[0].v);
     setKPI("kpi-24h", now - data24h[0].v);
 
-    // Alert
-    updateAlert(
-        now,
-        data1h[0].v,
-        data6h[0].v,
-        data24h[0].v
-    );
+    updateAlert(now, data1h[0].v, data6h[0].v, data24h[0].v);
 
-    // Grafico principale
     drawChart(data1h, data6h, data24h);
 
-    // Dati e grafico 7 giorni
     const data7 = await fetch7Days();
-    if (data7.length > 0) {
-        drawChart7(data7);
-    }
+    if (data7.length) drawChart7(data7);
 }
 
 let chart;
@@ -274,7 +253,6 @@ let chart7;
 
 function drawChart(d1, d6, d24) {
     const ctx = document.getElementById("chart").getContext("2d");
-
     if (chart) chart.destroy();
 
     chart = new Chart(ctx, {
@@ -311,7 +289,11 @@ function drawChart(d1, d6, d24) {
         options: {
             responsive: true,
             plugins: {
-                legend: { position: "top" }
+                legend: { position: "top", labels: { font: { size: 11 } } }
+            },
+            scales: {
+                x: { ticks: { font: { size: 10 } } },
+                y: { ticks: { font: { size: 10 } } }
             }
         }
     });
@@ -319,7 +301,6 @@ function drawChart(d1, d6, d24) {
 
 function drawChart7(data) {
     const ctx = document.getElementById("chart7").getContext("2d");
-
     if (chart7) chart7.destroy();
 
     chart7 = new Chart(ctx, {
@@ -338,13 +319,16 @@ function drawChart7(data) {
         options: {
             responsive: true,
             plugins: {
-                legend: { position: "top" }
+                legend: { position: "top", labels: { font: { size: 11 } } }
+            },
+            scales: {
+                x: { ticks: { font: { size: 10 } } },
+                y: { ticks: { font: { size: 10 } } }
             }
         }
     });
 }
 
-// Primo aggiornamento e refresh ogni 60 secondi
 updateDashboard();
 setInterval(updateDashboard, 60000);
 </script>
