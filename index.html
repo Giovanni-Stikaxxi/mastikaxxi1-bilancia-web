@@ -40,6 +40,13 @@
         margin-bottom: 20px;
     }
 
+    .logo {
+        width: 320px;
+        max-width: 90%;
+        display: block;
+        margin: 0 auto 10px auto;
+    }
+
     .container {
         display: grid;
         grid-template-columns: 350px 1fr;
@@ -84,7 +91,8 @@
 <body>
 
 <header>
-    <h1>📊 Dashboard Premium – Bilancia IoT</h1>
+    <img src="logo.png" alt="Logo Mastikaxxi" class="logo">
+    <h1 style="margin-top: 0;">📊 Dashboard Premium – Bilancia IoT</h1>
 </header>
 
 <div class="container">
@@ -124,7 +132,7 @@
 const CHANNEL_ID = "3171602";
 const API_KEY = "JQ1UUYT4R4T83V0V";
 
-// Funzione per formattare a due decimali
+// Formattazione a due decimali
 function fmt(n) {
     return Number.parseFloat(n).toFixed(2);
 }
