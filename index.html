@@ -124,6 +124,11 @@
 const CHANNEL_ID = "3171602";
 const API_KEY = "JQ1UUYT4R4T83V0V";
 
+// Funzione per formattare a due decimali
+function fmt(n) {
+    return Number.parseFloat(n).toFixed(2);
+}
+
 async function fetchData(minutes) {
     const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/fields/1.json?api_key=${API_KEY}&minutes=${minutes}&results=500`;
     const res = await fetch(url);
@@ -136,7 +141,7 @@ async function fetchData(minutes) {
 
 function setKPI(id, value) {
     const el = document.getElementById(id);
-    el.textContent = value + " g";
+    el.textContent = fmt(value) + " g";
 
     if (value > 0) el.className = "kpi kpi-positive";
     else if (value < 0) el.className = "kpi kpi-negative";
@@ -150,7 +155,7 @@ async function updateDashboard() {
 
     const now = data1h[data1h.length - 1].v;
 
-    document.getElementById("kpi-now").textContent = now + " g";
+    document.getElementById("kpi-now").textContent = fmt(now) + " g";
 
     setKPI("kpi-1h", now - data1h[0].v);
     setKPI("kpi-6h", now - data6h[0].v);
@@ -173,7 +178,7 @@ function drawChart(d1, d6, d24) {
             datasets: [
                 {
                     label: "Ultima Ora",
-                    data: d1.map(p => p.v),
+                    data: d1.map(p => parseFloat(fmt(p.v))),
                     borderColor: "#4da3ff",
                     backgroundColor: "rgba(77,163,255,0.2)",
                     tension: 0.4,
@@ -181,7 +186,7 @@ function drawChart(d1, d6, d24) {
                 },
                 {
                     label: "Ultime 6 Ore",
-                    data: d6.map(p => p.v),
+                    data: d6.map(p => parseFloat(fmt(p.v))),
                     borderColor: "#2ecc71",
                     backgroundColor: "rgba(46,204,113,0.2)",
                     tension: 0.4,
@@ -189,7 +194,7 @@ function drawChart(d1, d6, d24) {
                 },
                 {
                     label: "Ultime 24 Ore",
-                    data: d24.map(p => p.v),
+                    data: d24.map(p => parseFloat(fmt(p.v))),
                     borderColor: "#e67e22",
                     backgroundColor: "rgba(230,126,34,0.2)",
                     tension: 0.4,
@@ -212,4 +217,3 @@ setInterval(updateDashboard, 60000);
 
 </body>
 </html>
-
