@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Bilancia IoT – Dashboard Premium</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
@@ -85,6 +86,25 @@
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Responsive per mobile */
+    @media (max-width: 900px) {
+        .container {
+            grid-template-columns: 1fr;
+        }
+
+        .logo {
+            width: 220px;
+        }
+
+        .kpi {
+            font-size: 1.6rem;
+        }
+
+        canvas {
+            height: 300px;
+        }
+    }
 </style>
 </head>
 
@@ -97,7 +117,7 @@
 
 <div class="container">
 
-    <!-- COLONNA KPI -->
+    <!-- COLONNA SINISTRA: KPI + ALERT -->
     <div>
         <div class="card">
             <div class="kpi-label">Peso Attuale</div>
@@ -118,12 +138,25 @@
             <div class="kpi-label">Variazione 24 ore</div>
             <div id="kpi-24h" class="kpi kpi-neutral">-- g</div>
         </div>
+
+        <!-- ALERT INTELLIGENTE -->
+        <div class="card" id="alert-card" style="border-left: 8px solid #3498db;">
+            <div class="kpi-label">Stato Sistema</div>
+            <div id="alert-text" class="kpi" style="font-size:1.4rem;">Analisi in corso...</div>
+        </div>
     </div>
 
-    <!-- COLONNA GRAFICO -->
-    <div class="card">
-        <h2>Andamento Peso (1h / 6h / 24h)</h2>
-        <canvas id="chart"></canvas>
+    <!-- COLONNA DESTRA: GRAFICI -->
+    <div>
+        <div class="card">
+            <h2>Andamento Peso (1h / 6h / 24h)</h2>
+            <canvas id="chart"></canvas>
+        </div>
+
+        <div class="card">
+            <h2>Andamento Ultimi 7 Giorni</h2>
+            <canvas id="chart7"></canvas>
+        </div>
     </div>
 
 </div>
@@ -141,10 +174,25 @@ async function fetchData(minutes) {
     const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/fields/1.json?api_key=${API_KEY}&minutes=${minutes}&results=500`;
     const res = await fetch(url);
     const data = await res.json();
-    return data.feeds.map(f => ({
-        t: new Date(f.created_at),
-        v: parseFloat(f.field1)
-    }));
+    return data.feeds
+        .filter(f => f.field1 !== null)
+        .map(f => ({
+            t: new Date(f.created_at),
+            v: parseFloat(f.field1)
+        }));
+}
+
+// Dati ultimi 7 giorni
+async function fetch7Days() {
+    const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/fields/1.json?api_key=${API_KEY}&days=7&results=8000`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.feeds
+        .filter(f => f.field1 !== null)
+        .map(f => ({
+            t: new Date(f.created_at),
+            v: parseFloat(f.field1)
+        }));
 }
 
 function setKPI(id, value) {
@@ -156,23 +204,73 @@ function setKPI(id, value) {
     else el.className = "kpi kpi-neutral";
 }
 
+// ALERT INTELLIGENTE
+function updateAlert(now, d1, d6, d24) {
+    const alertCard = document.getElementById("alert-card");
+    const alertText = document.getElementById("alert-text");
+
+    const var1 = now - d1;
+    const var6 = now - d6;
+    const var24 = now - d24;
+
+    // Esempio di logica: adatta le soglie ai tuoi valori reali
+    if (now < 50) {
+        alertCard.style.borderLeftColor = "#e74c3c";
+        alertText.textContent = "Peso troppo basso!";
+    }
+    else if (var24 > 20) {
+        alertCard.style.borderLeftColor = "#f39c12";
+        alertText.textContent = "Aumento anomalo nelle ultime 24h";
+    }
+    else if (var24 < -20) {
+        alertCard.style.borderLeftColor = "#e67e22";
+        alertText.textContent = "Diminuzione anomala nelle ultime 24h";
+    }
+    else {
+        alertCard.style.borderLeftColor = "#2ecc71";
+        alertText.textContent = "Peso stabile";
+    }
+}
+
 async function updateDashboard() {
+    // Dati 1h, 6h, 24h
     const data1h = await fetchData(60);
     const data6h = await fetchData(360);
     const data24h = await fetchData(1440);
 
+    if (data1h.length === 0 || data6h.length === 0 || data24h.length === 0) {
+        console.warn("Dati insufficienti per uno dei periodi.");
+        return;
+    }
+
     const now = data1h[data1h.length - 1].v;
 
+    // KPI
     document.getElementById("kpi-now").textContent = fmt(now) + " g";
-
     setKPI("kpi-1h", now - data1h[0].v);
     setKPI("kpi-6h", now - data6h[0].v);
     setKPI("kpi-24h", now - data24h[0].v);
 
+    // Alert
+    updateAlert(
+        now,
+        data1h[0].v,
+        data6h[0].v,
+        data24h[0].v
+    );
+
+    // Grafico principale
     drawChart(data1h, data6h, data24h);
+
+    // Dati e grafico 7 giorni
+    const data7 = await fetch7Days();
+    if (data7.length > 0) {
+        drawChart7(data7);
+    }
 }
 
 let chart;
+let chart7;
 
 function drawChart(d1, d6, d24) {
     const ctx = document.getElementById("chart").getContext("2d");
@@ -219,6 +317,34 @@ function drawChart(d1, d6, d24) {
     });
 }
 
+function drawChart7(data) {
+    const ctx = document.getElementById("chart7").getContext("2d");
+
+    if (chart7) chart7.destroy();
+
+    chart7 = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: data.map(p => p.t.toLocaleDateString()),
+            datasets: [{
+                label: "Ultimi 7 Giorni",
+                data: data.map(p => parseFloat(fmt(p.v))),
+                borderColor: "#9b59b6",
+                backgroundColor: "rgba(155,89,182,0.2)",
+                tension: 0.3,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: "top" }
+            }
+        }
+    });
+}
+
+// Primo aggiornamento e refresh ogni 60 secondi
 updateDashboard();
 setInterval(updateDashboard, 60000);
 </script>
