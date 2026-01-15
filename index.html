@@ -2,335 +2,55 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Bilancia IoT – Dashboard Premium</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-
+<title>Bilancia Remota</title>
 <style>
-    body {
-        font-family: 'Inter', sans-serif;
-        margin: 0;
-        padding: 0;
-        background: var(--bg);
-        color: var(--text);
-        transition: background 0.3s, color 0.3s;
-    }
-
-    :root {
-        --bg: #f4f4f4;
-        --card: #ffffff;
-        --text: #222;
-        --accent: #007bff;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --text: #e0e0e0;
-            --accent: #4da3ff;
-        }
-    }
-
-    header {
-        padding: 20px;
-        text-align: center;
-        background: var(--card);
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-    }
-
-    .logo {
-        width: 320px;
-        max-width: 90%;
-        display: block;
-        margin: 0 auto 10px auto;
-    }
-
-    .container {
-        display: grid;
-        grid-template-columns: 350px 1fr;
-        gap: 20px;
-        padding: 20px;
-    }
-
-    .card {
-        background: var(--card);
-        padding: 14px; /* COMPATTATO */
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        animation: fadeIn 0.6s ease;
-    }
-
-    .kpi {
-        font-size: 2rem;
-        font-weight: 600;
-    }
-
-    .kpi-label {
-        font-size: 0.9rem;
-        opacity: 0.7;
-    }
-
-    .kpi-positive { color: #2ecc71; }
-    .kpi-negative { color: #e74c3c; }
-    .kpi-neutral { color: #bdc3c7; }
-
-    canvas {
-        width: 100%;
-        height: 230px; /* ALTEZZA RIDOTTA */
-    }
-
-    .card h2 {
-        margin-bottom: 8px; /* COMPATTATO */
-        font-size: 1.1rem; /* PIÙ PICCOLO */
-    }
-
-    .card canvas {
-        margin-top: 6px; /* COMPATTATO */
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    @media (max-width: 900px) {
-        .container {
-            grid-template-columns: 1fr;
-        }
-
-        .logo {
-            width: 220px;
-        }
-
-        .kpi {
-            font-size: 1.6rem;
-        }
-
-        canvas {
-            height: 210px; /* PIÙ COMPATTO SU MOBILE */
-        }
-    }
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    padding: 20px;
+  }
+  .card {
+    background: white;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  h2 { margin-top: 0 }
 </style>
 </head>
-
 <body>
 
-<header>
-    <img src="logo.png" alt="Logo Mastikaxxi" class="logo">
-    <h1 style="margin-top: 0;">📊 Dashboard Premium – Bilancia IoT</h1>
-</header>
+<h1>📊 Bilancia Remota</h1>
 
-<div class="container">
+<div class="card">
+  <h2>📡 Stato Connessione</h2>
+  <p><strong>Wi‑Fi:</strong> <span id="wifiName">---</span></p>
+  <p><strong>Ultimo invio:</strong> <span id="lastSend">---</span></p>
+</div>
 
-    <div>
-        <div class="card">
-            <div class="kpi-label">Peso Attuale</div>
-            <div id="kpi-now" class="kpi">-- g</div>
-        </div>
+<div class="card">
+  <h2>⚖️ Ultimo Peso</h2>
+  <p><strong>Peso:</strong> <span id="peso">---</span> g</p>
+</div>
 
-        <div class="card">
-            <div class="kpi-label">Variazione 1 ora</div>
-            <div id="kpi-1h" class="kpi kpi-neutral">-- g</div>
-        </div>
-
-        <div class="card">
-            <div class="kpi-label">Variazione 6 ore</div>
-            <div id="kpi-6h" class="kpi kpi-neutral">-- g</div>
-        </div>
-
-        <div class="card">
-            <div class="kpi-label">Variazione 24 ore</div>
-            <div id="kpi-24h" class="kpi kpi-neutral">-- g</div>
-        </div>
-
-        <div class="card" id="alert-card" style="border-left: 8px solid #3498db;">
-            <div class="kpi-label">Stato Sistema</div>
-            <div id="alert-text" class="kpi" style="font-size:1.4rem;">Analisi in corso...</div>
-        </div>
-    </div>
-
-    <div>
-        <div class="card">
-            <h2>Andamento Peso (1h / 6h / 24h)</h2>
-            <canvas id="chart"></canvas>
-        </div>
-
-        <div class="card">
-            <h2>Andamento Ultimi 7 Giorni</h2>
-            <canvas id="chart7"></canvas>
-        </div>
-    </div>
-
+<div class="card">
+  <h2>📈 Grafico Peso</h2>
+  <iframe width="100%" height="400" src="https://thingspeak.com/channels/3171602/charts/1?bgcolor=%23ffffff&color=%2300aaff&dynamic=true&results=60&type=line"></iframe>
 </div>
 
 <script>
-const CHANNEL_ID = "3171602";
-const API_KEY = "JQ1UUYT4R4T83V0V";
+const url = "https://api.thingspeak.com/channels/3171602/feeds.json?results=1";
 
-function fmt(n) {
-    return Number.parseFloat(n).toFixed(2);
-}
+fetch(url)
+  .then(r => r.json())
+  .then(data => {
+    const feed = data.feeds[0];
 
-async function fetchData(minutes) {
-    const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/fields/1.json?api_key=${API_KEY}&minutes=${minutes}&results=500`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.feeds.filter(f => f.field1 !== null).map(f => ({
-        t: new Date(f.created_at),
-        v: parseFloat(f.field1)
-    }));
-}
-
-async function fetch7Days() {
-    const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/fields/1.json?api_key=${API_KEY}&days=7&results=8000`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.feeds.filter(f => f.field1 !== null).map(f => ({
-        t: new Date(f.created_at),
-        v: parseFloat(f.field1)
-    }));
-}
-
-function setKPI(id, value) {
-    const el = document.getElementById(id);
-    el.textContent = fmt(value) + " g";
-    if (value > 0) el.className = "kpi kpi-positive";
-    else if (value < 0) el.className = "kpi kpi-negative";
-    else el.className = "kpi kpi-neutral";
-}
-
-function updateAlert(now, d1, d6, d24) {
-    const alertCard = document.getElementById("alert-card");
-    const alertText = document.getElementById("alert-text");
-
-    const var24 = now - d24;
-
-    if (now < 50) {
-        alertCard.style.borderLeftColor = "#e74c3c";
-        alertText.textContent = "Peso troppo basso!";
-    }
-    else if (var24 > 20) {
-        alertCard.style.borderLeftColor = "#f39c12";
-        alertText.textContent = "Aumento anomalo nelle ultime 24h";
-    }
-    else if (var24 < -20) {
-        alertCard.style.borderLeftColor = "#e67e22";
-        alertText.textContent = "Diminuzione anomala nelle ultime 24h";
-    }
-    else {
-        alertCard.style.borderLeftColor = "#2ecc71";
-        alertText.textContent = "Peso stabile";
-    }
-}
-
-async function updateDashboard() {
-    const data1h = await fetchData(60);
-    const data6h = await fetchData(360);
-    const data24h = await fetchData(1440);
-
-    if (!data1h.length || !data6h.length || !data24h.length) return;
-
-    const now = data1h[data1h.length - 1].v;
-
-    document.getElementById("kpi-now").textContent = fmt(now) + " g";
-    setKPI("kpi-1h", now - data1h[0].v);
-    setKPI("kpi-6h", now - data6h[0].v);
-    setKPI("kpi-24h", now - data24h[0].v);
-
-    updateAlert(now, data1h[0].v, data6h[0].v, data24h[0].v);
-
-    drawChart(data1h, data6h, data24h);
-
-    const data7 = await fetch7Days();
-    if (data7.length) drawChart7(data7);
-}
-
-let chart;
-let chart7;
-
-function drawChart(d1, d6, d24) {
-    const ctx = document.getElementById("chart").getContext("2d");
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: d24.map(p => p.t.toLocaleTimeString()),
-            datasets: [
-                {
-                    label: "Ultima Ora",
-                    data: d1.map(p => parseFloat(fmt(p.v))),
-                    borderColor: "#4da3ff",
-                    backgroundColor: "rgba(77,163,255,0.2)",
-                    tension: 0.4,
-                    borderWidth: 2
-                },
-                {
-                    label: "Ultime 6 Ore",
-                    data: d6.map(p => parseFloat(fmt(p.v))),
-                    borderColor: "#2ecc71",
-                    backgroundColor: "rgba(46,204,113,0.2)",
-                    tension: 0.4,
-                    borderWidth: 2
-                },
-                {
-                    label: "Ultime 24 Ore",
-                    data: d24.map(p => parseFloat(fmt(p.v))),
-                    borderColor: "#e67e22",
-                    backgroundColor: "rgba(230,126,34,0.2)",
-                    tension: 0.4,
-                    borderWidth: 2
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: "top", labels: { font: { size: 11 } } }
-            },
-            scales: {
-                x: { ticks: { font: { size: 10 } } },
-                y: { ticks: { font: { size: 10 } } }
-            }
-        }
-    });
-}
-
-function drawChart7(data) {
-    const ctx = document.getElementById("chart7").getContext("2d");
-    if (chart7) chart7.destroy();
-
-    chart7 = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: data.map(p => p.t.toLocaleDateString()),
-            datasets: [{
-                label: "Ultimi 7 Giorni",
-                data: data.map(p => parseFloat(fmt(p.v))),
-                borderColor: "#9b59b6",
-                backgroundColor: "rgba(155,89,182,0.2)",
-                tension: 0.3,
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: "top", labels: { font: { size: 11 } } }
-            },
-            scales: {
-                x: { ticks: { font: { size: 10 } } },
-                y: { ticks: { font: { size: 10 } } }
-            }
-        }
-    });
-}
-
-updateDashboard();
-setInterval(updateDashboard, 60000);
+    document.getElementById("peso").innerText = feed.field1;
+    document.getElementById("wifiName").innerText = feed.field3;
+    document.getElementById("lastSend").innerText = feed.field4;
+  });
 </script>
 
 </body>
