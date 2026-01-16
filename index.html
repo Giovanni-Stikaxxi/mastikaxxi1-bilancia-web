@@ -72,6 +72,12 @@
     padding: 6px 12px;
     cursor: pointer;
   }
+
+  #csvBtn {
+    padding: 6px 12px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
 </style>
 </head>
 <body>
@@ -89,6 +95,16 @@
   </p>
   <p><strong>Ultimo aggiornamento:</strong> <span id="lastUpdate">---</span></p>
   <p><strong>Wi‑Fi:</strong> <span id="wifiName">---</span></p>
+</div>
+
+<!-- STATISTICHE VELOCI -->
+<div class="card">
+  <h2>📊 Statistiche Veloci (24h)</h2>
+  <p><strong>Minimo:</strong> <span id="min24">---</span> g</p>
+  <p><strong>Massimo:</strong> <span id="max24">---</span> g</p>
+  <p><strong>Media:</strong> <span id="avg24">---</span> g</p>
+  <p><strong>Deviazione standard:</strong> <span id="std24">---</span> g</p>
+  <p><strong>Tendenza:</strong> <span id="trend24">---</span></p>
 </div>
 
 <!-- PESO -->
@@ -110,6 +126,12 @@
   </div>
 </div>
 
+<!-- GRAFICO 30 GIORNI -->
+<div class="card">
+  <h2>📅 Peso (ultimi 30 giorni)</h2>
+  <canvas id="grafico30"></canvas>
+</div>
+
 <!-- TABELLA -->
 <div class="card">
   <h2>📄 Ultimi 10 pesi</h2>
@@ -122,6 +144,8 @@
     </thead>
     <tbody id="tabellaPesi"></tbody>
   </table>
+
+  <button id="csvBtn">⬇️ Scarica CSV</button>
 </div>
 
 <script>
@@ -132,8 +156,9 @@ const urlLast = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_k
 const url10 = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&results=10`;
 const url24h = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&days=1`;
 const url7d = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&days=7`;
+const url30d = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&days=30`;
 
-let chart24, chart7;
+let chart24, chart7, chart30;
 
 // ----------------------
 // AGGIORNA STATO + ULTIMO PESO
@@ -148,14 +173,12 @@ function aggiornaUltimo() {
       document.getElementById("peso").innerText = pesoAttuale;
       document.getElementById("wifiName").innerText = f.field3;
 
-      // Calcolo minuti trascorsi
       const last = new Date(f.field4);
       const now = new Date();
       const diffMin = Math.round((now - last) / 60000);
 
       document.getElementById("lastUpdate").innerText = `${diffMin} minuti fa`;
 
-      // ONLINE / OFFLINE
       if (diffMin <= 20) {
         statusDot.style.background = "limegreen";
         statusText.innerText = "Bilancia ONLINE";
@@ -164,7 +187,6 @@ function aggiornaUltimo() {
         statusText.innerText = "Bilancia OFFLINE";
       }
 
-      // Evidenzia variazioni > 500 g
       const pesoPrecedente = window.ultimoPeso ?? pesoAttuale;
       window.ultimoPeso = pesoAttuale;
 
@@ -198,6 +220,31 @@ function aggiornaTabella() {
 }
 
 // ----------------------
+// STATISTICHE 24H
+// ----------------------
+function aggiornaStatistiche24() {
+  fetch(url24h)
+    .then(r => r.json())
+    .then(data => {
+      const valori = data.feeds.map(f => parseFloat(f.field1));
+
+      const min = Math.min(...valori);
+      const max = Math.max(...valori);
+      const avg = valori.reduce((a,b)=>a+b,0) / valori.length;
+      const std = Math.sqrt(valori.map(v => (v-avg)**2).reduce((a,b)=>a+b,0) / valori.length);
+
+      document.getElementById("min24").innerText = min.toFixed(2);
+      document.getElementById("max24").innerText = max.toFixed(2);
+      document.getElementById("avg24").innerText = avg.toFixed(2);
+      document.getElementById("std24").innerText = std.toFixed(2);
+
+      const trend = valori[valori.length-1] - valori[0];
+      document.getElementById("trend24").innerText =
+        trend > 0 ? "In aumento" : trend < 0 ? "In calo" : "Stabile";
+    });
+}
+
+// ----------------------
 // GRAFICO 24H + MEDIA MOBILE
 // ----------------------
 function aggiornaGrafico24() {
@@ -207,7 +254,6 @@ function aggiornaGrafico24() {
       const labels = data.feeds.map(f => f.field4);
       const valori = data.feeds.map(f => parseFloat(f.field1));
 
-      // Media mobile (finestra 5 valori)
       const mediaMobile = valori.map((v, i, arr) => {
         const start = Math.max(0, i - 2);
         const end = Math.min(arr.length, i + 3);
@@ -273,6 +319,55 @@ function aggiornaGrafico7() {
 }
 
 // ----------------------
+// GRAFICO 30 GIORNI
+// ----------------------
+function aggiornaGrafico30() {
+  fetch(url30d)
+    .then(r => r.json())
+    .then(data => {
+      const labels = data.feeds.map(f => f.field4);
+      const valori = data.feeds.map(f => f.field1);
+
+      if (chart30) chart30.destroy();
+
+      chart30 = new Chart(document.getElementById("grafico30"), {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Peso (g)",
+            data: valori,
+            borderColor: "#00cc66",
+            backgroundColor: "rgba(0,204,102,0.2)",
+            tension: 0.3
+          }]
+        },
+        options: { responsive: true }
+      });
+    });
+}
+
+// ----------------------
+// CSV EXPORT
+// ----------------------
+document.getElementById("csvBtn").onclick = () => {
+  fetch(url30d)
+    .then(r => r.json())
+    .then(data => {
+      let csv = "peso,data\n";
+      data.feeds.forEach(f => {
+        csv += `${f.field1},${f.field4}\n`;
+      });
+
+      const blob = new Blob([csv], {type: "text/csv"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "bilancia.csv";
+      a.click();
+    });
+};
+
+// ----------------------
 // TEMA SCURO / CHIARO
 // ----------------------
 document.getElementById("themeBtn").onclick = () => {
@@ -287,8 +382,10 @@ document.getElementById("themeBtn").onclick = () => {
 function aggiornaTutto() {
   aggiornaUltimo();
   aggiornaTabella();
+  aggiornaStatistiche24();
   aggiornaGrafico24();
   aggiornaGrafico7();
+  aggiornaGrafico30();
 }
 
 aggiornaTutto();
