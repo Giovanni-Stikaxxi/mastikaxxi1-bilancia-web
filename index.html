@@ -3,68 +3,229 @@
 <head>
 <meta charset="UTF-8">
 <title>Bilancia Remota</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
   body {
     font-family: Arial, sans-serif;
-    background: #f5f5f5;
+    background: var(--bg);
+    color: var(--text);
     padding: 20px;
+    transition: 0.3s;
   }
+
+  :root {
+    --bg: #f5f5f5;
+    --card: white;
+    --text: #222;
+    --shadow: rgba(0,0,0,0.1);
+  }
+
+  .dark {
+    --bg: #1e1e1e;
+    --card: #2c2c2c;
+    --text: #e6e6e6;
+    --shadow: rgba(255,255,255,0.1);
+  }
+
   .card {
-    background: white;
+    background: var(--card);
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px var(--shadow);
   }
-  h2 { margin-top: 0 }
+
+  .status-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  table td, table th {
+    padding: 8px;
+    border-bottom: 1px solid #ccc;
+  }
+
+  #themeBtn {
+    float: right;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
 
+<button id="themeBtn">🌙 Tema Scuro</button>
+
 <h1>📊 Bilancia Remota</h1>
 
+<!-- STATO -->
 <div class="card">
   <h2>📡 Stato Connessione</h2>
+  <p>
+    <span id="statusDot" class="status-dot" style="background:red"></span>
+    <strong id="statusText">Offline</strong>
+  </p>
+  <p><strong>Ultimo aggiornamento:</strong> <span id="lastUpdate">---</span></p>
   <p><strong>Wi‑Fi:</strong> <span id="wifiName">---</span></p>
-  <p><strong>Ultimo invio:</strong> <span id="lastSend">---</span></p>
 </div>
 
+<!-- PESO -->
 <div class="card">
   <h2>⚖️ Ultimo Peso</h2>
   <p><strong>Peso:</strong> <span id="peso">---</span> g</p>
 </div>
 
+<!-- GRAFICO -->
 <div class="card">
-  <h2>📈 Grafico Peso</h2>
-  <iframe width="100%" height="400"
-  src="https://thingspeak.com/channels/3171602/charts/1?api_key=JQ1UUYT4R4T83V0V&bgcolor=%23ffffff&color=%2300aaff&dynamic=true&results=60&type=line">
-</iframe>
+  <h2>📈 Grafico Peso (ultime 24h)</h2>
+  <canvas id="grafico"></canvas>
+</div>
 
+<!-- TABELLA -->
+<div class="card">
+  <h2>📄 Ultimi 10 pesi</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Peso (g)</th>
+        <th>Data locale</th>
+      </tr>
+    </thead>
+    <tbody id="tabellaPesi"></tbody>
+  </table>
 </div>
 
 <script>
-const url = "https://api.thingspeak.com/channels/3171602/feeds.json?api_key=JQ1UUYT4R4T83V0V&results=1";
+const READ_KEY = "JQ1UUYT4R4T83V0V";
+const CHANNEL = 3171602;
 
-function aggiornaDati() {
-  fetch(url)
+// URL per ultimo dato
+const urlLast = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&results=1`;
+
+// URL per ultimi 10 dati
+const url10 = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&results=10`;
+
+// URL per grafico 24h
+const url24h = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&days=1`;
+
+let chart;
+
+// ----------------------
+// AGGIORNA STATO + ULTIMO PESO
+// ----------------------
+function aggiornaUltimo() {
+  fetch(urlLast)
     .then(r => r.json())
     .then(data => {
-      if (!data.feeds || data.feeds.length === 0) return;
+      const f = data.feeds[0];
 
-      const feed = data.feeds[0];
+      document.getElementById("peso").innerText = f.field1;
+      document.getElementById("wifiName").innerText = f.field3;
 
-      document.getElementById("peso").innerText = feed.field1 ?? "---";
-      document.getElementById("wifiName").innerText = feed.field3 ?? "---";
-      document.getElementById("lastSend").innerText = feed.field4 ?? "---";
-    })
-    .catch(err => console.error("Errore:", err));
+      // Calcolo minuti trascorsi
+      const last = new Date(f.field4);
+      const now = new Date();
+      const diffMin = Math.round((now - last) / 60000);
+
+      document.getElementById("lastUpdate").innerText = `${diffMin} minuti fa`;
+
+      // ONLINE / OFFLINE
+      if (diffMin <= 20) {
+        document.getElementById("statusDot").style.background = "limegreen";
+        document.getElementById("statusText").innerText = "Bilancia ONLINE";
+      } else {
+        document.getElementById("statusDot").style.background = "red";
+        document.getElementById("statusText").innerText = "Bilancia OFFLINE";
+      }
+    });
 }
 
-// Aggiorna subito
-aggiornaDati();
+// ----------------------
+// TABELLA ULTIMI 10 PESI
+// ----------------------
+function aggiornaTabella() {
+  fetch(url10)
+    .then(r => r.json())
+    .then(data => {
+      const tbody = document.getElementById("tabellaPesi");
+      tbody.innerHTML = "";
 
-// Aggiorna ogni 30 secondi
-setInterval(aggiornaDati, 30000);
+      data.feeds.reverse().forEach(f => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${f.field1}</td>
+          <td>${f.field4}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+}
+
+// ----------------------
+// GRAFICO 24H
+// ----------------------
+function aggiornaGrafico() {
+  fetch(url24h)
+    .then(r => r.json())
+    .then(data => {
+      const labels = data.feeds.map(f => f.field4);
+      const valori = data.feeds.map(f => f.field1);
+
+      if (chart) chart.destroy();
+
+      chart = new Chart(document.getElementById("grafico"), {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Peso (g)",
+            data: valori,
+            borderColor: "#00aaff",
+            backgroundColor: "rgba(0,170,255,0.2)",
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { ticks: { maxRotation: 45, minRotation: 45 } }
+          }
+        }
+      });
+    });
+}
+
+// ----------------------
+// TEMA SCURO / CHIARO
+// ----------------------
+document.getElementById("themeBtn").onclick = () => {
+  document.body.classList.toggle("dark");
+  document.getElementById("themeBtn").innerText =
+    document.body.classList.contains("dark") ? "☀️ Tema Chiaro" : "🌙 Tema Scuro";
+};
+
+// ----------------------
+// AGGIORNAMENTI PERIODICI
+// ----------------------
+function aggiornaTutto() {
+  aggiornaUltimo();
+  aggiornaTabella();
+  aggiornaGrafico();
+}
+
+aggiornaTutto();
+setInterval(aggiornaTutto, 30000);
 </script>
 
 </body>
