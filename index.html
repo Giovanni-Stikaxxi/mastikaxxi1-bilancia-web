@@ -137,7 +137,7 @@
       <span id="statusDot" class="status-dot" style="background:red"></span>
       <strong id="statusText">Offline</strong>
     </p>
-    <p><strong>Ultimo aggiornamento:</strong> <span id="lastUpdate">---</span></p>
+    <p><strong>Ultimo invio:</strong> <span id="lastUpdate">---</span></p>
     <p><strong>Wi‑Fi:</strong> <span id="wifiName">---</span></p>
 
     <button id="taraBtn" onclick="tara()">🔧 TARA = 0</button>
@@ -240,7 +240,7 @@ function taraCustom() {
 }
 
 /* -----------------------------
-   AGGIORNA ULTIMO PESO
+   AGGIORNA ULTIMO PESO + INFO
 ----------------------------- */
 async function aggiornaPeso() {
   const url = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1/last.json?api_key=${READ_KEY}`;
@@ -252,8 +252,13 @@ async function aggiornaPeso() {
   const kg = (parseFloat(data.field1) / 1000).toFixed(3);
 
   document.getElementById("peso").innerText = kg;
-  document.getElementById("lastUpdate").innerText = new Date(data.created_at).toLocaleString();
-  document.getElementById("wifiName").innerText = data.field3 || "---";
+
+  const dt = new Date(data.created_at);
+  document.getElementById("lastUpdate").innerText =
+    dt.toLocaleDateString("it-IT") + " " + dt.toLocaleTimeString("it-IT");
+
+  document.getElementById("wifiName").innerText =
+    data.field3 && data.field3.trim() !== "" ? data.field3 : "N/D";
 
   document.getElementById("statusDot").style.background = "green";
   document.getElementById("statusText").innerText = "Online";
@@ -287,7 +292,7 @@ async function variazioniCombinato() {
     diff3 = (last - first).toFixed(3);
   }
 
-  // --- INDICATORI NUMERICI + FRECCE ---
+  // --- INDICATORI ---
   document.getElementById("num24h").innerText = diff24 + " kg";
   document.getElementById("num3h").innerText = diff3 + " kg";
 
@@ -297,7 +302,7 @@ async function variazioniCombinato() {
   document.getElementById("arrow3h").innerHTML =
     diff3 >= 0 ? "<span class='up'>↑</span>" : "<span class='down'>↓</span>";
 
-  // --- GRAFICO COMBINATO ---
+  // --- GRAFICO ---
   new Chart(document.getElementById("varCombined"), {
     type: "bar",
     data: {
