@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Bilancia Remota</title>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -67,16 +66,20 @@
     border-bottom: 1px solid #ccc;
   }
 
-  #themeBtn {
-    float: right;
-    padding: 6px 12px;
+  #themeBtn, #taraBtn, #csvBtn {
+    padding: 8px 14px;
     cursor: pointer;
+    border-radius: 6px;
+    border: none;
+    margin-top: 10px;
   }
 
-  #csvBtn {
-    padding: 6px 12px;
-    cursor: pointer;
-    margin-top: 10px;
+  #taraBtn {
+    background: #ffcc00;
+  }
+
+  #taraBtn:hover {
+    background: #ffdd33;
   }
 </style>
 </head>
@@ -86,7 +89,6 @@
 
 <h1>📊 Bilancia Remota</h1>
 
-<!-- STATO -->
 <div class="card">
   <h2>📡 Stato Connessione</h2>
   <p>
@@ -95,25 +97,14 @@
   </p>
   <p><strong>Ultimo aggiornamento:</strong> <span id="lastUpdate">---</span></p>
   <p><strong>Wi‑Fi:</strong> <span id="wifiName">---</span></p>
+  <button id="taraBtn" onclick="tara()">🔧 Esegui TARA</button>
 </div>
 
-<!-- STATISTICHE VELOCI -->
-<div class="card">
-  <h2>📊 Statistiche Veloci (24h)</h2>
-  <p><strong>Minimo:</strong> <span id="min24">---</span> g</p>
-  <p><strong>Massimo:</strong> <span id="max24">---</span> g</p>
-  <p><strong>Media:</strong> <span id="avg24">---</span> g</p>
-  <p><strong>Deviazione standard:</strong> <span id="std24">---</span> g</p>
-  <p><strong>Tendenza:</strong> <span id="trend24">---</span></p>
-</div>
-
-<!-- PESO -->
 <div class="card">
   <h2>⚖️ Ultimo Peso</h2>
   <p><strong>Peso:</strong> <span id="peso">---</span> g</p>
 </div>
 
-<!-- GRAFICI AFFIANCATI -->
 <div id="grafici-container">
   <div class="card grafico-box">
     <h2>📈 Peso (ultime 24h)</h2>
@@ -126,13 +117,11 @@
   </div>
 </div>
 
-<!-- GRAFICO 30 GIORNI -->
 <div class="card">
   <h2>📅 Peso (ultimi 30 giorni)</h2>
   <canvas id="grafico30"></canvas>
 </div>
 
-<!-- TABELLA -->
 <div class="card">
   <h2>📄 Ultimi 10 pesi</h2>
   <table>
@@ -150,246 +139,13 @@
 
 <script>
 const READ_KEY = "JQ1UUYT4R4T83V0V";
+const WRITE_KEY = "8S3QL5TMQQDO0GR6";
 const CHANNEL = 3171602;
 
-const urlLast = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&results=1`;
-const url10 = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&results=10`;
-const url24h = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&days=1`;
-const url7d = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&days=7`;
-const url30d = `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?api_key=${READ_KEY}&days=30`;
-
-let chart24, chart7, chart30;
-
-// ----------------------
-// AGGIORNA STATO + ULTIMO PESO
-// ----------------------
-function aggiornaUltimo() {
-  fetch(urlLast)
-    .then(r => r.json())
-    .then(data => {
-      const f = data.feeds[0];
-
-      const pesoAttuale = parseFloat(f.field1);
-      document.getElementById("peso").innerText = pesoAttuale;
-      document.getElementById("wifiName").innerText = f.field3;
-
-      const last = new Date(f.field4);
-      const now = new Date();
-      const diffMin = Math.round((now - last) / 60000);
-
-      document.getElementById("lastUpdate").innerText = `${diffMin} minuti fa`;
-
-      if (diffMin <= 20) {
-        statusDot.style.background = "limegreen";
-        statusText.innerText = "Bilancia ONLINE";
-      } else {
-        statusDot.style.background = "red";
-        statusText.innerText = "Bilancia OFFLINE";
-      }
-
-      const pesoPrecedente = window.ultimoPeso ?? pesoAttuale;
-      window.ultimoPeso = pesoAttuale;
-
-      if (Math.abs(pesoAttuale - pesoPrecedente) > 500) {
-        document.getElementById("peso").style.color = "red";
-      } else {
-        document.getElementById("peso").style.color = "var(--text)";
-      }
-    });
+function tara() {
+  fetch(`https://api.thingspeak.com/update?api_key=${WRITE_KEY}&field5=1`)
+    .then(() => alert("TARA inviata alla bilancia!"));
 }
-
-// ----------------------
-// TABELLA ULTIMI 10 PESI
-// ----------------------
-function aggiornaTabella() {
-  fetch(url10)
-    .then(r => r.json())
-    .then(data => {
-      const tbody = document.getElementById("tabellaPesi");
-      tbody.innerHTML = "";
-
-      data.feeds.reverse().forEach(f => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${f.field1}</td>
-          <td>${f.field4}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    });
-}
-
-// ----------------------
-// STATISTICHE 24H
-// ----------------------
-function aggiornaStatistiche24() {
-  fetch(url24h)
-    .then(r => r.json())
-    .then(data => {
-      const valori = data.feeds.map(f => parseFloat(f.field1));
-
-      const min = Math.min(...valori);
-      const max = Math.max(...valori);
-      const avg = valori.reduce((a,b)=>a+b,0) / valori.length;
-      const std = Math.sqrt(valori.map(v => (v-avg)**2).reduce((a,b)=>a+b,0) / valori.length);
-
-      document.getElementById("min24").innerText = min.toFixed(2);
-      document.getElementById("max24").innerText = max.toFixed(2);
-      document.getElementById("avg24").innerText = avg.toFixed(2);
-      document.getElementById("std24").innerText = std.toFixed(2);
-
-      const trend = valori[valori.length-1] - valori[0];
-      document.getElementById("trend24").innerText =
-        trend > 0 ? "In aumento" : trend < 0 ? "In calo" : "Stabile";
-    });
-}
-
-// ----------------------
-// GRAFICO 24H + MEDIA MOBILE
-// ----------------------
-function aggiornaGrafico24() {
-  fetch(url24h)
-    .then(r => r.json())
-    .then(data => {
-      const labels = data.feeds.map(f => f.field4);
-      const valori = data.feeds.map(f => parseFloat(f.field1));
-
-      const mediaMobile = valori.map((v, i, arr) => {
-        const start = Math.max(0, i - 2);
-        const end = Math.min(arr.length, i + 3);
-        const slice = arr.slice(start, end);
-        return slice.reduce((a,b) => a+b, 0) / slice.length;
-      });
-
-      if (chart24) chart24.destroy();
-
-      chart24 = new Chart(document.getElementById("grafico24"), {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: "Peso (g)",
-              data: valori,
-              borderColor: "#00aaff",
-              backgroundColor: "rgba(0,170,255,0.2)",
-              tension: 0.3
-            },
-            {
-              label: "Media mobile",
-              data: mediaMobile,
-              borderColor: "#ff0066",
-              borderDash: [5,5],
-              tension: 0.3
-            }
-          ]
-        },
-        options: { responsive: true }
-      });
-    });
-}
-
-// ----------------------
-// GRAFICO 7 GIORNI
-// ----------------------
-function aggiornaGrafico7() {
-  fetch(url7d)
-    .then(r => r.json())
-    .then(data => {
-      const labels = data.feeds.map(f => f.field4);
-      const valori = data.feeds.map(f => f.field1);
-
-      if (chart7) chart7.destroy();
-
-      chart7 = new Chart(document.getElementById("grafico7"), {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [{
-            label: "Peso (g)",
-            data: valori,
-            borderColor: "#ffaa00",
-            backgroundColor: "rgba(255,170,0,0.2)",
-            tension: 0.3
-          }]
-        },
-        options: { responsive: true }
-      });
-    });
-}
-
-// ----------------------
-// GRAFICO 30 GIORNI
-// ----------------------
-function aggiornaGrafico30() {
-  fetch(url30d)
-    .then(r => r.json())
-    .then(data => {
-      const labels = data.feeds.map(f => f.field4);
-      const valori = data.feeds.map(f => f.field1);
-
-      if (chart30) chart30.destroy();
-
-      chart30 = new Chart(document.getElementById("grafico30"), {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [{
-            label: "Peso (g)",
-            data: valori,
-            borderColor: "#00cc66",
-            backgroundColor: "rgba(0,204,102,0.2)",
-            tension: 0.3
-          }]
-        },
-        options: { responsive: true }
-      });
-    });
-}
-
-// ----------------------
-// CSV EXPORT
-// ----------------------
-document.getElementById("csvBtn").onclick = () => {
-  fetch(url30d)
-    .then(r => r.json())
-    .then(data => {
-      let csv = "peso,data\n";
-      data.feeds.forEach(f => {
-        csv += `${f.field1},${f.field4}\n`;
-      });
-
-      const blob = new Blob([csv], {type: "text/csv"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "bilancia.csv";
-      a.click();
-    });
-};
-
-// ----------------------
-// TEMA SCURO / CHIARO
-// ----------------------
-document.getElementById("themeBtn").onclick = () => {
-  document.body.classList.toggle("dark");
-  themeBtn.innerText =
-    document.body.classList.contains("dark") ? "☀️ Tema Chiaro" : "🌙 Tema Scuro";
-};
-
-// ----------------------
-// AGGIORNAMENTI PERIODICI
-// ----------------------
-function aggiornaTutto() {
-  aggiornaUltimo();
-  aggiornaTabella();
-  aggiornaStatistiche24();
-  aggiornaGrafico24();
-  aggiornaGrafico7();
-  aggiornaGrafico30();
-}
-
-aggiornaTutto();
-setInterval(aggiornaTutto, 30000);
 </script>
 
 </body>
