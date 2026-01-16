@@ -36,21 +36,34 @@
 
 <div class="card">
   <h2>📈 Grafico Peso</h2>
-  <iframe width="100%" height="400" src="https://thingspeak.com/channels/3171602/charts/1?bgcolor=%23ffffff&color=%2300aaff&dynamic=true&results=60&type=line"></iframe>
+  <iframe width="100%" height="400"
+    src="https://thingspeak.com/channels/3171602/charts/1?bgcolor=%23ffffff&color=%2300aaff&dynamic=true&results=60&type=line">
+  </iframe>
 </div>
 
 <script>
-const url = "https://api.thingspeak.com/channels/3171602/feeds.json?results=1";
+const url = "https://api.thingspeak.com/channels/3171602/feeds.json?api_key=JQ1UUYT4R4T83V0V&results=1";
 
-fetch(url)
-  .then(r => r.json())
-  .then(data => {
-    const feed = data.feeds[0];
+function aggiornaDati() {
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.feeds || data.feeds.length === 0) return;
 
-    document.getElementById("peso").innerText = feed.field1;
-    document.getElementById("wifiName").innerText = feed.field3;
-    document.getElementById("lastSend").innerText = feed.field4;
-  });
+      const feed = data.feeds[0];
+
+      document.getElementById("peso").innerText = feed.field1 ?? "---";
+      document.getElementById("wifiName").innerText = feed.field3 ?? "---";
+      document.getElementById("lastSend").innerText = feed.field4 ?? "---";
+    })
+    .catch(err => console.error("Errore:", err));
+}
+
+// Aggiorna subito
+aggiornaDati();
+
+// Aggiorna ogni 30 secondi
+setInterval(aggiornaDati, 30000);
 </script>
 
 </body>
