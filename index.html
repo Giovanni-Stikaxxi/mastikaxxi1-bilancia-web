@@ -44,7 +44,7 @@
     margin-right: 8px;
   }
 
-  /* --- LAYOUT A DUE COLONNE --- */
+  /* Layout a due colonne */
   #top-container {
     display: flex;
     gap: 20px;
@@ -57,13 +57,31 @@
 
   #variazioni-box {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
   }
 
-  .small-card canvas {
-    max-height: 150px;
+  #varCombined {
+    max-height: 200px;
+  }
+
+  .indicatori {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+    font-size: 1.2rem;
+  }
+
+  .indicatore {
+    text-align: center;
+  }
+
+  .up {
+    color: green;
+    font-weight: bold;
+  }
+
+  .down {
+    color: red;
+    font-weight: bold;
   }
 
   /* Grafici principali */
@@ -88,16 +106,12 @@
     border-bottom: 1px solid #ccc;
   }
 
-  #themeBtn, #taraBtn, #csvBtn {
-    padding: 8px 14px;
-    cursor: pointer;
-    border-radius: 6px;
-    border: none;
-    margin-top: 10px;
-  }
-
   #taraBtn {
     background: #ffcc00;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
   }
 
   #taraBtn:hover {
@@ -134,18 +148,20 @@
   </div>
 
   <!-- COLONNA DESTRA -->
-  <div id="variazioni-box">
+  <div id="variazioni-box" class="card">
+    <h2>📊 Variazioni peso</h2>
+    <canvas id="varCombined"></canvas>
 
-    <div class="card small-card">
-      <h2>📊 Variazione 24h</h2>
-      <canvas id="var24h"></canvas>
+    <div class="indicatori">
+      <div class="indicatore">
+        <div id="num24h">--</div>
+        <div id="arrow24h">--</div>
+      </div>
+      <div class="indicatore">
+        <div id="num3h">--</div>
+        <div id="arrow3h">--</div>
+      </div>
     </div>
-
-    <div class="card small-card">
-      <h2⏱️ Variazione 3h</h2>
-      <canvas id="var3h"></canvas>
-    </div>
-
   </div>
 
 </div>
@@ -244,57 +260,62 @@ async function aggiornaPeso() {
 }
 
 /* -----------------------------
-   VARIAZIONE 24 ORE
+   GRAFICO COMBINATO + INDICATORI
 ----------------------------- */
-async function variazione24h() {
-  const url = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1.json?api_key=${READ_KEY}&days=1`;
-  const r = await fetch(url);
-  const data = await r.json();
+async function variazioniCombinato() {
+  // --- VARIAZIONE 24H ---
+  const url24 = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1.json?api_key=${READ_KEY}&days=1`;
+  const r24 = await fetch(url24);
+  const d24 = await r24.json();
 
-  if (!data.feeds.length) return;
+  let diff24 = 0;
+  if (d24.feeds.length > 0) {
+    const first = parseFloat(d24.feeds[0].field1) / 1000;
+    const last = parseFloat(d24.feeds[d24.feeds.length - 1].field1) / 1000;
+    diff24 = (last - first).toFixed(3);
+  }
 
-  const first = parseFloat(data.feeds[0].field1) / 1000;
-  const last = parseFloat(data.feeds[data.feeds.length - 1].field1) / 1000;
+  // --- VARIAZIONE 3H ---
+  const url3 = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1.json?api_key=${READ_KEY}&hours=3`;
+  const r3 = await fetch(url3);
+  const d3 = await r3.json();
 
-  const diff = (last - first).toFixed(3);
+  let diff3 = 0;
+  if (d3.feeds.length > 0) {
+    const first = parseFloat(d3.feeds[0].field1) / 1000;
+    const last = parseFloat(d3.feeds[d3.feeds.length - 1].field1) / 1000;
+    diff3 = (last - first).toFixed(3);
+  }
 
-  new Chart(document.getElementById("var24h"), {
+  // --- INDICATORI NUMERICI + FRECCE ---
+  document.getElementById("num24h").innerText = diff24 + " kg";
+  document.getElementById("num3h").innerText = diff3 + " kg";
+
+  document.getElementById("arrow24h").innerHTML =
+    diff24 >= 0 ? "<span class='up'>↑</span>" : "<span class='down'>↓</span>";
+
+  document.getElementById("arrow3h").innerHTML =
+    diff3 >= 0 ? "<span class='up'>↑</span>" : "<span class='down'>↓</span>";
+
+  // --- GRAFICO COMBINATO ---
+  new Chart(document.getElementById("varCombined"), {
     type: "bar",
     data: {
-      labels: ["24h"],
+      labels: ["24h", "3h"],
       datasets: [{
         label: "Δ kg",
-        data: [diff],
-        backgroundColor: diff >= 0 ? "green" : "red"
+        data: [diff24, diff3],
+        backgroundColor: [
+          diff24 >= 0 ? "green" : "red",
+          diff3 >= 0 ? "green" : "red"
+        ]
       }]
-    }
-  });
-}
-
-/* -----------------------------
-   VARIAZIONE 3 ORE
------------------------------ */
-async function variazione3h() {
-  const url = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1.json?api_key=${READ_KEY}&hours=3`;
-  const r = await fetch(url);
-  const data = await r.json();
-
-  if (!data.feeds.length) return;
-
-  const first = parseFloat(data.feeds[0].field1) / 1000;
-  const last = parseFloat(data.feeds[data.feeds.length - 1].field1) / 1000;
-
-  const diff = (last - first).toFixed(3);
-
-  new Chart(document.getElementById("var3h"), {
-    type: "bar",
-    data: {
-      labels: ["3h"],
-      datasets: [{
-        label: "Δ kg",
-        data: [diff],
-        backgroundColor: diff >= 0 ? "green" : "red"
-      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
     }
   });
 }
@@ -352,8 +373,7 @@ async function caricaTabella() {
 function aggiornaTutto() {
   aggiornaPeso();
   caricaTabella();
-  variazione24h();
-  variazione3h();
+  variazioniCombinato();
 }
 
 aggiornaTutto();
