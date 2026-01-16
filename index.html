@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Bilancia Remota</title>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -142,10 +141,92 @@ const READ_KEY = "JQ1UUYT4R4T83V0V";
 const WRITE_KEY = "8S3QL5TMQQDO0GR6";
 const CHANNEL = 3171602;
 
+// -----------------------------
+// FUNZIONE TARA
+// -----------------------------
 function tara() {
   fetch(`https://api.thingspeak.com/update?api_key=${WRITE_KEY}&field5=1`)
     .then(() => alert("TARA inviata alla bilancia!"));
 }
+
+// -----------------------------
+// AGGIORNA ULTIMO PESO
+// -----------------------------
+async function aggiornaPeso() {
+  const url = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1/last.json?api_key=${READ_KEY}`;
+  const r = await fetch(url);
+  const data = await r.json();
+
+  if (!data.field1) return;
+
+  document.getElementById("peso").innerText = parseFloat(data.field1).toFixed(2);
+  document.getElementById("lastUpdate").innerText = new Date(data.created_at).toLocaleString();
+  document.getElementById("wifiName").innerText = data.field3 || "---";
+
+  document.getElementById("statusDot").style.background = "green";
+  document.getElementById("statusText").innerText = "Online";
+}
+
+// -----------------------------
+// GRAFICI
+// -----------------------------
+async function caricaGrafico(canvasId, days) {
+  const url = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1.json?api_key=${READ_KEY}&days=${days}`;
+  const r = await fetch(url);
+  const data = await r.json();
+
+  const labels = data.feeds.map(f => new Date(f.created_at).toLocaleString());
+  const values = data.feeds.map(f => parseFloat(f.field1));
+
+  new Chart(document.getElementById(canvasId), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Peso (g)",
+        data: values,
+        borderColor: "blue",
+        fill: false
+      }]
+    }
+  });
+}
+
+// -----------------------------
+// TABELLA ULTIMI 10 PESI
+// -----------------------------
+async function caricaTabella() {
+  const url = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1.json?api_key=${READ_KEY}&results=10`;
+  const r = await fetch(url);
+  const data = await r.json();
+
+  const tbody = document.getElementById("tabellaPesi");
+  tbody.innerHTML = "";
+
+  data.feeds.reverse().forEach(f => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${parseFloat(f.field1).toFixed(2)}</td>
+      <td>${new Date(f.created_at).toLocaleString()}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// -----------------------------
+// AGGIORNAMENTO AUTOMATICO
+// -----------------------------
+function aggiornaTutto() {
+  aggiornaPeso();
+  caricaTabella();
+}
+
+aggiornaTutto();
+caricaGrafico("grafico24", 1);
+caricaGrafico("grafico7", 7);
+caricaGrafico("grafico30", 30);
+
+setInterval(aggiornaTutto, 15000);
 </script>
 
 </body>
