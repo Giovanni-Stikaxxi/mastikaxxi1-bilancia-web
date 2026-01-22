@@ -91,13 +91,13 @@ table th {
 }
 
 /* ------------------------------
-   GRAFICO RESPONSIVO
+   GRAFICO RESPONSIVO (VIA DI MEZZO)
 --------------------------------*/
 .chart-container {
     position: relative;
     width: 100%;
-    max-width: 600px;
-    height: 250px;
+    max-width: 650px;   /* più largo */
+    height: 220px;      /* altezza media */
     margin: 0 auto;
 }
 
@@ -107,7 +107,7 @@ table th {
 }
 
 /* ------------------------------
-   RESPONSIVE
+   RESPONSIVE PER IPHONE
 --------------------------------*/
 @media (max-width: 480px) {
     .logo {
@@ -123,6 +123,6 @@ table th {
     }
 
     .chart-container {
-        height: 180px;
+        height: 200px;   /* più grande rispetto a prima */
     }
 }
