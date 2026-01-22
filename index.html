@@ -2,391 +2,200 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Bilancia Remota</title>
+<title>Bilancia 1 - Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding: 20px;
-    transition: 0.3s;
-  }
-
-  :root {
-    --bg: #f5f5f5;
-    --card: white;
-    --text: #222;
-    --shadow: rgba(0,0,0,0.1);
-  }
-
-  .dark {
-    --bg: #1e1e1e;
-    --card: #2c2c2c;
-    --text: #e6e6e6;
-    --shadow: rgba(255,255,255,0.1);
-  }
-
-  .card {
-    background: var(--card);
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px var(--shadow);
-  }
-
-  .status-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 8px;
-  }
-
-  /* Layout a due colonne */
-  #top-container {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-  }
-
-  #connessione-box {
-    flex: 1;
-  }
-
-  #variazioni-box {
-    flex: 1;
-  }
-
-  #varCombined {
-    max-height: 200px;
-  }
-
-  .indicatori {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 10px;
-    font-size: 1.2rem;
-  }
-
-  .indicatore {
-    text-align: center;
-  }
-
-  .up {
-    color: green;
-    font-weight: bold;
-  }
-
-  .down {
-    color: red;
-    font-weight: bold;
-  }
-
-  /* Grafici principali */
-  #grafici-container {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
-
-  .grafico-box {
-    flex: 1;
-    min-width: 350px;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  table td, table th {
-    padding: 8px;
-    border-bottom: 1px solid #ccc;
-  }
-
-  #taraBtn {
-    background: #ffcc00;
-    padding: 8px 14px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-  }
-
-  #taraBtn:hover {
-    background: #ffdd33;
-  }
+    body {
+        font-family: Arial, sans-serif;
+        background: #111;
+        color: #eee;
+        margin: 0;
+        padding: 20px;
+    }
+    h1 {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .card {
+        background: #1c1c1c;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .big-value {
+        font-size: 3rem;
+        text-align: center;
+        font-weight: bold;
+        color: #4CAF50;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    table th, table td {
+        padding: 8px;
+        border-bottom: 1px solid #333;
+        text-align: center;
+    }
+    .btn-group button {
+        background: #333;
+        color: #eee;
+        border: none;
+        padding: 10px 15px;
+        margin-right: 5px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    .btn-group button:hover {
+        background: #555;
+    }
 </style>
 </head>
+
 <body>
 
-<button id="themeBtn">🌙 Tema Scuro</button>
+<h1>Bilancia 1 - Dashboard</h1>
 
-<h1>📊 Bilancia Remota</h1>
+<div class="card">
+    <h2>Peso Attuale</h2>
+    <div id="pesoAttuale" class="big-value">--.- kg</div>
+</div>
 
-<!-- ============================
-     SEZIONE SUPERIORE A DUE COLONNE
-     ============================ -->
-<div id="top-container">
+<div class="card">
+    <h2>Stato Bilancia</h2>
+    <p><strong>Stato:</strong> <span id="statoConn">--</span></p>
+    <p><strong>Ultimo aggiornamento:</strong> <span id="ultimoAgg">--</span></p>
+    <p><strong>Rete WiFi:</strong> <span id="reteWifi">--</span></p>
+</div>
 
-  <!-- COLONNA SINISTRA -->
-  <div class="card" id="connessione-box">
-    <h2>📡 Stato Connessione</h2>
-    <p>
-      <span id="statusDot" class="status-dot" style="background:red"></span>
-      <strong id="statusText">Offline</strong>
-    </p>
-    <p><strong>Ultimo invio:</strong> <span id="lastUpdate">---</span></p>
-    <p><strong>Wi‑Fi:</strong> <span id="wifiName">---</span></p>
+<div class="card">
+    <h2>Ultimi 10 Pesi</h2>
+    <table>
+        <thead>
+            <tr><th>Ora</th><th>Peso (kg)</th></tr>
+        </thead>
+        <tbody id="tabellaPesi"></tbody>
+    </table>
+</div>
 
-    <button id="taraBtn" onclick="tara()">🔧 TARA = 0</button>
-
-    <br><br>
-    <input id="taraValue" type="number" step="0.001" placeholder="Tara in kg">
-    <button onclick="taraCustom()">📏 TARA personalizzata</button>
-  </div>
-
-  <!-- COLONNA DESTRA -->
-  <div id="variazioni-box" class="card">
-    <h2>📊 Variazioni peso</h2>
-    <canvas id="varCombined"></canvas>
-
-    <div class="indicatori">
-      <div class="indicatore">
-        <div id="num24h">--</div>
-        <div id="arrow24h">--</div>
-      </div>
-      <div class="indicatore">
-        <div id="num3h">--</div>
-        <div id="arrow3h">--</div>
-      </div>
+<div class="card">
+    <h2>Storico Peso</h2>
+    <div class="btn-group">
+        <button onclick="caricaGrafico(1)">Ultime 24 ore</button>
+        <button onclick="caricaGrafico(7)">Ultimi 7 giorni</button>
+        <button onclick="caricaGrafico(30)">Ultimi 30 giorni</button>
     </div>
-  </div>
-
-</div>
-
-<!-- ============================
-     PESO ATTUALE
-     ============================ -->
-<div class="card">
-  <h2>⚖️ Ultimo Peso</h2>
-  <p><strong>Peso:</strong> <span id="peso">---</span> kg</p>
-</div>
-
-<!-- ============================
-     GRAFICI PRINCIPALI
-     ============================ -->
-<div id="grafici-container">
-  <div class="card grafico-box">
-    <h2>📈 Peso (ultime 24h)</h2>
-    <canvas id="grafico24"></canvas>
-  </div>
-
-  <div class="card grafico-box">
-    <h2>📉 Peso (ultimi 7 giorni)</h2>
-    <canvas id="grafico7"></canvas>
-  </div>
-</div>
-
-<div class="card">
-  <h2>📅 Peso (ultimi 30 giorni)</h2>
-  <canvas id="grafico30"></canvas>
-</div>
-
-<!-- ============================
-     TABELLA ULTIMI 10 PESI
-     ============================ -->
-<div class="card">
-  <h2>📄 Ultimi 10 pesi</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Peso (kg)</th>
-        <th>Data locale</th>
-      </tr>
-    </thead>
-    <tbody id="tabellaPesi"></tbody>
-  </table>
+    <canvas id="graficoPeso" height="120"></canvas>
 </div>
 
 <script>
-const READ_KEY = "JQ1UUYT4R4T83V0V";
-const WRITE_KEY = "8S3QL5TMQQDO0GR6";
-const CHANNEL = 3171602;
+const channelID = 3171602;
+const readAPIKey = "JQ1UUYT4R4T83V0V";
 
-/* -----------------------------
-   TARA = 0
------------------------------ */
-function tara() {
-  fetch(`https://api.thingspeak.com/update?api_key=${WRITE_KEY}&field5=1`)
-    .then(() => alert("TARA = 0 inviata!"));
+let chart;
+
+// ----------------------
+// PESO ATTUALE
+// ----------------------
+async function aggiornaPesoAttuale() {
+    const url = `https://api.thingspeak.com/channels/${channelID}/fields/1/last.json?api_key=${readAPIKey}`;
+    const r = await fetch(url);
+    const data = await r.json();
+
+    const peso = parseFloat(data.field1) / 1000;
+    document.getElementById("pesoAttuale").innerText = peso.toFixed(3) + " kg";
+
+    document.getElementById("ultimoAgg").innerText = data.created_at.replace("T", " ").replace("Z", "");
 }
 
-/* -----------------------------
-   TARA PERSONALIZZATA
------------------------------ */
-function taraCustom() {
-  const kg = parseFloat(document.getElementById("taraValue").value);
-  if (isNaN(kg)) {
-    alert("Inserisci un valore valido in kg");
-    return;
-  }
+// ----------------------
+// STATO BILANCIA
+// ----------------------
+async function aggiornaStato() {
+    try {
+        const url = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
+        const r = await fetch(url);
+        const data = await r.json();
 
-  const grammi = kg * 1000;
-
-  fetch(`https://api.thingspeak.com/update?api_key=${WRITE_KEY}&field6=${grammi}`)
-    .then(() => alert("TARA personalizzata inviata!"));
-}
-
-/* -----------------------------
-   AGGIORNA ULTIMO PESO + INFO
------------------------------ */
-async function aggiornaPeso() {
-  const url = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1/last.json?api_key=${READ_KEY}`;
-  const r = await fetch(url);
-  const data = await r.json();
-
-  if (!data.field1) return;
-
-  const kg = (parseFloat(data.field1) / 1000).toFixed(3);
-
-  document.getElementById("peso").innerText = kg;
-
-  const dt = new Date(data.created_at);
-  document.getElementById("lastUpdate").innerText =
-    dt.toLocaleDateString("it-IT") + " " + dt.toLocaleTimeString("it-IT");
-
-  document.getElementById("wifiName").innerText =
-    data.field3 && data.field3.trim() !== "" ? data.field3 : "N/D";
-
-  document.getElementById("statusDot").style.background = "green";
-  document.getElementById("statusText").innerText = "Online";
-}
-
-/* -----------------------------
-   GRAFICO COMBINATO + INDICATORI
------------------------------ */
-async function variazioniCombinato() {
-  // --- VARIAZIONE 24H ---
-  const url24 = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1.json?api_key=${READ_KEY}&days=1`;
-  const r24 = await fetch(url24);
-  const d24 = await r24.json();
-
-  let diff24 = 0;
-  if (d24.feeds.length > 0) {
-    const first = parseFloat(d24.feeds[0].field1) / 1000;
-    const last = parseFloat(d24.feeds[d24.feeds.length - 1].field1) / 1000;
-    diff24 = (last - first).toFixed(3);
-  }
-
-  // --- VARIAZIONE 3H ---
-  const url3 = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1.json?api_key=${READ_KEY}&hours=3`;
-  const r3 = await fetch(url3);
-  const d3 = await r3.json();
-
-  let diff3 = 0;
-  if (d3.feeds.length > 0) {
-    const first = parseFloat(d3.feeds[0].field1) / 1000;
-    const last = parseFloat(d3.feeds[d3.feeds.length - 1].field1) / 1000;
-    diff3 = (last - first).toFixed(3);
-  }
-
-  // --- INDICATORI ---
-  document.getElementById("num24h").innerText = diff24 + " kg";
-  document.getElementById("num3h").innerText = diff3 + " kg";
-
-  document.getElementById("arrow24h").innerHTML =
-    diff24 >= 0 ? "<span class='up'>↑</span>" : "<span class='down'>↓</span>";
-
-  document.getElementById("arrow3h").innerHTML =
-    diff3 >= 0 ? "<span class='up'>↑</span>" : "<span class='down'>↓</span>";
-
-  // --- GRAFICO ---
-  new Chart(document.getElementById("varCombined"), {
-    type: "bar",
-    data: {
-      labels: ["24h", "3h"],
-      datasets: [{
-        label: "Δ kg",
-        data: [diff24, diff3],
-        backgroundColor: [
-          diff24 >= 0 ? "green" : "red",
-          diff3 >= 0 ? "green" : "red"
-        ]
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero: true }
-      }
+        document.getElementById("statoConn").innerText = "Online";
+        document.getElementById("reteWifi").innerText = data.field3 || "N/D";
+    } catch {
+        document.getElementById("statoConn").innerText = "Offline";
     }
-  });
 }
 
-/* -----------------------------
-   GRAFICI PRINCIPALI
------------------------------ */
-async function caricaGrafico(canvasId, days) {
-  const url = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1.json?api_key=${READ_KEY}&days=${days}`;
-  const r = await fetch(url);
-  const data = await r.json();
+// ----------------------
+// ULTIMI 10 PESI
+// ----------------------
+async function aggiornaTabella() {
+    const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=10`;
+    const r = await fetch(url);
+    const data = await r.json();
 
-  const labels = data.feeds.map(f => new Date(f.created_at).toLocaleString());
-  const values = data.feeds.map(f => (parseFloat(f.field1) / 1000).toFixed(3));
+    const tbody = document.getElementById("tabellaPesi");
+    tbody.innerHTML = "";
 
-  new Chart(document.getElementById(canvasId), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "Peso (kg)",
-        data: values,
-        borderColor: "blue",
-        fill: false
-      }]
-    }
-  });
+    data.feeds.reverse().forEach(f => {
+        const peso = (parseFloat(f.field1) / 1000).toFixed(3);
+        const ora = f.created_at.replace("T", " ").replace("Z", "");
+
+        tbody.innerHTML += `<tr><td>${ora}</td><td>${peso}</td></tr>`;
+    });
 }
 
-/* -----------------------------
-   TABELLA ULTIMI 10 PESI
------------------------------ */
-async function caricaTabella() {
-  const url = `https://api.thingspeak.com/channels/${CHANNEL}/fields/1.json?api_key=${READ_KEY}&results=10`;
-  const r = await fetch(url);
-  const data = await r.json();
+// ----------------------
+// GRAFICO
+// ----------------------
+async function caricaGrafico(giorni) {
+    const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&days=${giorni}`;
+    const r = await fetch(url);
+    const data = await r.json();
 
-  const tbody = document.getElementById("tabellaPesi");
-  tbody.innerHTML = "";
+    const labels = data.feeds.map(f => f.created_at.replace("T", " ").replace("Z", ""));
+    const valori = data.feeds.map(f => parseFloat(f.field1) / 1000);
 
-  data.feeds.reverse().forEach(f => {
-    const kg = (parseFloat(f.field1) / 1000).toFixed(3);
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${kg}</td>
-      <td>${new Date(f.created_at).toLocaleString()}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+    if (chart) chart.destroy();
+
+    const ctx = document.getElementById("graficoPeso").getContext("2d");
+    chart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Peso (kg)",
+                data: valori,
+                borderColor: "#4CAF50",
+                borderWidth: 2,
+                fill: false
+            }]
+        },
+        options: {
+            scales: {
+                x: { ticks: { color: "#ccc" } },
+                y: { ticks: { color: "#ccc" } }
+            },
+            plugins: {
+                legend: { labels: { color: "#ccc" } }
+            }
+        }
+    });
 }
 
-/* -----------------------------
-   AGGIORNAMENTO AUTOMATICO
------------------------------ */
-function aggiornaTutto() {
-  aggiornaPeso();
-  caricaTabella();
-  variazioniCombinato();
+// ----------------------
+// AGGIORNAMENTO AUTOMATICO
+// ----------------------
+function aggiornaDashboard() {
+    aggiornaPesoAttuale();
+    aggiornaStato();
+    aggiornaTabella();
+    caricaGrafico(1);
 }
 
-aggiornaTutto();
-caricaGrafico("grafico24", 1);
-caricaGrafico("grafico7", 7);
-caricaGrafico("grafico30", 30);
-
-setInterval(aggiornaTutto, 15000);
+aggiornaDashboard();
+setInterval(aggiornaDashboard, 30000);
 </script>
 
 </body>
