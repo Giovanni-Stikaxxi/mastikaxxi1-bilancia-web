@@ -1,6 +1,3 @@
-/* ------------------------------
-   STILE GENERALE
---------------------------------*/
 body {
     font-family: Arial, sans-serif;
     background: #f4f4f4;
@@ -9,9 +6,6 @@ body {
     padding: 20px;
 }
 
-/* ------------------------------
-   HEADER CON LOGHI
---------------------------------*/
 .header-logos {
     display: flex;
     justify-content: space-between;
@@ -32,9 +26,6 @@ body {
     height: auto;
 }
 
-/* ------------------------------
-   CARD
---------------------------------*/
 .card {
     background: #ffffff;
     padding: 20px;
@@ -43,9 +34,6 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* ------------------------------
-   PESO ATTUALE
---------------------------------*/
 .big-value {
     font-size: 3rem;
     text-align: center;
@@ -53,9 +41,6 @@ body {
     color: #4CAF50;
 }
 
-/* ------------------------------
-   TABELLA
---------------------------------*/
 table {
     width: 100%;
     border-collapse: collapse;
@@ -72,9 +57,6 @@ table th {
     background: #eaeaea;
 }
 
-/* ------------------------------
-   BOTTONI GRAFICO
---------------------------------*/
 .btn-group button {
     background: #e0e0e0;
     color: #222;
@@ -90,9 +72,6 @@ table th {
     background: #d5d5d5;
 }
 
-/* ------------------------------
-   GRAFICO RESPONSIVO (VIA DI MEZZO)
---------------------------------*/
 .chart-container {
     position: relative;
     width: 100%;
@@ -106,9 +85,6 @@ table th {
     height: 100%;
 }
 
-/* ------------------------------
-   RESPONSIVE PER IPHONE
---------------------------------*/
 @media (max-width: 480px) {
     .logo {
         width: 60px;

@@ -44,9 +44,9 @@
     <h2>Storico Peso</h2>
 
     <div class="btn-group">
-        <button onclick="caricaGrafico(1)">Ultime 24 ore</button>
-        <button onclick="caricaGrafico(7)">Ultimi 7 giorni</button>
-        <button onclick="caricaGrafico(30)">Ultimi 30 giorni</button>
+        <button onclick="caricaGrafico(96)">Ultime 24 ore</button>
+        <button onclick="caricaGrafico(672)">Ultimi 7 giorni</button>
+        <button onclick="caricaGrafico(2880)">Ultimi 30 giorni</button>
     </div>
 
     <div class="chart-container">
@@ -111,10 +111,10 @@ async function aggiornaTabella() {
 }
 
 // ----------------------
-// GRAFICO A ISTOGRAMMA
+// GRAFICO A ISTOGRAMMA (CON RESULTS)
 // ----------------------
-async function caricaGrafico(giorni) {
-    const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&days=${giorni}`;
+async function caricaGrafico(resultsCount) {
+    const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=${resultsCount}`;
     const r = await fetch(url);
     const data = await r.json();
 
@@ -158,7 +158,7 @@ function aggiornaDashboard() {
     aggiornaPesoAttuale();
     aggiornaStato();
     aggiornaTabella();
-    caricaGrafico(1);
+    caricaGrafico(96); // default: ultime 24 ore
 }
 
 aggiornaDashboard();
