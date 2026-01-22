@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+<link rel="stylesheet" href="style.css">
 <meta charset="UTF-8">
 <title>Bilancia 1 - Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,10 +15,22 @@
         margin: 0;
         padding: 20px;
     }
-    h1 {
+    .header-logos {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .header-logos h1 {
+        flex: 1;
         text-align: center;
-        margin-bottom: 10px;
+        margin: 0;
+        font-size: 2rem;
         color: #222;
+    }
+    .logo {
+        width: 80px;
+        height: auto;
     }
     .card {
         background: #ffffff;
@@ -59,7 +72,11 @@
 
 <body>
 
-<h1>Bilancia 1 - Dashboard</h1>
+<div class="header-logos">
+    <img src="logo.png" class="logo">
+    <h1>Bilancia 1 - Dashboard</h1>
+    <img src="logo.png" class="logo">
+</div>
 
 <div class="card">
     <h2>Peso Attuale</h2>
@@ -99,29 +116,20 @@ const readAPIKey = "JQ1UUYT4R4T83V0V";
 
 let chart;
 
-// ----------------------
-// PESO ATTUALE
-// ----------------------
 async function aggiornaPesoAttuale() {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1/last.json?api_key=${readAPIKey}`;
     const r = await fetch(url);
     const data = await r.json();
-
     const peso = parseFloat(data.field1) / 1000;
     document.getElementById("pesoAttuale").innerText = peso.toFixed(3) + " kg";
-
     document.getElementById("ultimoAgg").innerText = data.created_at.replace("T", " ").replace("Z", "");
 }
 
-// ----------------------
-// STATO BILANCIA
-// ----------------------
 async function aggiornaStato() {
     try {
         const url = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
         const r = await fetch(url);
         const data = await r.json();
-
         document.getElementById("statoConn").innerText = "Online";
         document.getElementById("reteWifi").innerText = data.field3 || "N/D";
     } catch {
@@ -129,38 +137,26 @@ async function aggiornaStato() {
     }
 }
 
-// ----------------------
-// ULTIMI 10 PESI
-// ----------------------
 async function aggiornaTabella() {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=10`;
     const r = await fetch(url);
     const data = await r.json();
-
     const tbody = document.getElementById("tabellaPesi");
     tbody.innerHTML = "";
-
     data.feeds.reverse().forEach(f => {
         const peso = (parseFloat(f.field1) / 1000).toFixed(3);
         const ora = f.created_at.replace("T", " ").replace("Z", "");
-
         tbody.innerHTML += `<tr><td>${ora}</td><td>${peso}</td></tr>`;
     });
 }
 
-// ----------------------
-// GRAFICO
-// ----------------------
 async function caricaGrafico(giorni) {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&days=${giorni}`;
     const r = await fetch(url);
     const data = await r.json();
-
     const labels = data.feeds.map(f => f.created_at.replace("T", " ").replace("Z", ""));
     const valori = data.feeds.map(f => parseFloat(f.field1) / 1000);
-
     if (chart) chart.destroy();
-
     const ctx = document.getElementById("graficoPeso").getContext("2d");
     chart = new Chart(ctx, {
         type: "line",
@@ -186,9 +182,6 @@ async function caricaGrafico(giorni) {
     });
 }
 
-// ----------------------
-// AGGIORNAMENTO AUTOMATICO
-// ----------------------
 function aggiornaDashboard() {
     aggiornaPesoAttuale();
     aggiornaStato();

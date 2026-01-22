@@ -1,0 +1,108 @@
+/* ------------------------------
+   STILE GENERALE
+--------------------------------*/
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    color: #222;
+    margin: 0;
+    padding: 20px;
+}
+
+/* ------------------------------
+   HEADER CON LOGHI
+--------------------------------*/
+.header-logos {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header-logos h1 {
+    flex: 1;
+    text-align: center;
+    margin: 0;
+    font-size: 2rem;
+    color: #222;
+}
+
+.logo {
+    width: 80px;
+    height: auto;
+}
+
+/* ------------------------------
+   CARD
+--------------------------------*/
+.card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* ------------------------------
+   PESO ATTUALE
+--------------------------------*/
+.big-value {
+    font-size: 3rem;
+    text-align: center;
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+/* ------------------------------
+   TABELLA
+--------------------------------*/
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+table th, table td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+table th {
+    background: #eaeaea;
+}
+
+/* ------------------------------
+   BOTTONI GRAFICO
+--------------------------------*/
+.btn-group button {
+    background: #e0e0e0;
+    color: #222;
+    border: none;
+    padding: 10px 15px;
+    margin-right: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: 0.2s;
+}
+
+.btn-group button:hover {
+    background: #d5d5d5;
+}
+
+/* ------------------------------
+   RESPONSIVE
+--------------------------------*/
+@media (max-width: 600px) {
+    .logo {
+        width: 60px;
+    }
+
+    .header-logos h1 {
+        font-size: 1.5rem;
+    }
+
+    .big-value {
+        font-size: 2.2rem;
+    }
+}
