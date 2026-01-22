@@ -41,6 +41,12 @@ body {
     color: #4CAF50;
 }
 
+.big-value-small {
+    font-size: 2rem;
+    text-align: center;
+    font-weight: bold;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -80,7 +86,15 @@ table th {
     margin: 0 auto;
 }
 
-#graficoPeso {
+.chart-container-small {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    height: 120px;
+    margin: 0 auto;
+}
+
+#graficoPeso, #graficoVar24h {
     width: 100%;
     height: 100%;
 }

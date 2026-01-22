@@ -24,6 +24,14 @@
 </div>
 
 <div class="card">
+    <h2>Variazione Ultime 24 Ore</h2>
+    <div id="var24h" class="big-value-small">-- kg</div>
+    <div class="chart-container-small">
+        <canvas id="graficoVar24h"></canvas>
+    </div>
+</div>
+
+<div class="card">
     <h2>Stato Bilancia</h2>
     <p><strong>Stato:</strong> <span id="statoConn">--</span></p>
     <p><strong>Ultimo aggiornamento:</strong> <span id="ultimoAgg">--</span></p>
@@ -59,6 +67,7 @@ const channelID = 3171602;
 const readAPIKey = "JQ1UUYT4R4T83V0V";
 
 let chart;
+let chartVar;
 
 // ----------------------
 // PESO ATTUALE
@@ -73,6 +82,50 @@ async function aggiornaPesoAttuale() {
 
     document.getElementById("ultimoAgg").innerText =
         data.created_at.replace("T", " ").replace("Z", "");
+}
+
+// ----------------------
+// VARIAZIONE 24 ORE
+// ----------------------
+async function aggiornaVariazione24h() {
+    const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=96`;
+    const r = await fetch(url);
+    const data = await r.json();
+
+    if (!data.feeds.length) return;
+
+    const primo = parseFloat(data.feeds[0].field1) / 1000;
+    const ultimo = parseFloat(data.feeds[data.feeds.length - 1].field1) / 1000;
+
+    const variazione = ultimo - primo;
+
+    document.getElementById("var24h").innerText =
+        (variazione >= 0 ? "+" : "") + variazione.toFixed(3) + " kg";
+
+    if (chartVar) chartVar.destroy();
+
+    const ctx = document.getElementById("graficoVar24h").getContext("2d");
+
+    chartVar = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: ["Variazione"],
+            datasets: [{
+                data: [variazione],
+                backgroundColor: variazione >= 0 ? "#4CAF50" : "#E53935",
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: "#444" } },
+                y: { ticks: { color: "#444" } }
+            }
+        }
+    });
 }
 
 // ----------------------
@@ -111,7 +164,7 @@ async function aggiornaTabella() {
 }
 
 // ----------------------
-// GRAFICO A ISTOGRAMMA (CON RESULTS)
+// GRAFICO PRINCIPALE A ISTOGRAMMA
 // ----------------------
 async function caricaGrafico(resultsCount) {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=${resultsCount}`;
@@ -156,9 +209,10 @@ async function caricaGrafico(resultsCount) {
 // ----------------------
 function aggiornaDashboard() {
     aggiornaPesoAttuale();
+    aggiornaVariazione24h();
     aggiornaStato();
     aggiornaTabella();
-    caricaGrafico(96); // default: ultime 24 ore
+    caricaGrafico(96);
 }
 
 aggiornaDashboard();
