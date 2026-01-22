@@ -96,8 +96,8 @@ table th {
 .chart-container {
     position: relative;
     width: 100%;
-    max-width: 650px;   /* più largo */
-    height: 220px;      /* altezza media */
+    max-width: 650px;
+    height: 220px;
     margin: 0 auto;
 }
 
@@ -123,6 +123,6 @@ table th {
     }
 
     .chart-container {
-        height: 200px;   /* più grande rispetto a prima */
+        height: 200px;
     }
 }

@@ -111,7 +111,7 @@ async function aggiornaTabella() {
 }
 
 // ----------------------
-// GRAFICO
+// GRAFICO A ISTOGRAMMA
 // ----------------------
 async function caricaGrafico(giorni) {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&days=${giorni}`;
@@ -126,17 +126,15 @@ async function caricaGrafico(giorni) {
     const ctx = document.getElementById("graficoPeso").getContext("2d");
 
     chart = new Chart(ctx, {
-        type: "line",
+        type: "bar",
         data: {
             labels: labels,
             datasets: [{
                 label: "Peso (kg)",
                 data: valori,
-                borderColor: "#4CAF50",
-                borderWidth: 2,
-                pointRadius: 0,
-                tension: 0.3,
-                fill: false
+                backgroundColor: "#4CAF50",
+                borderColor: "#388E3C",
+                borderWidth: 1
             }]
         },
         options: {
