@@ -115,6 +115,21 @@ table th {
     height: 100%;
 }
 
+/* GRAFICO MATLAB */
+.matlab-container {
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+
+.matlab-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
 /* RESPONSIVE */
 @media (max-width: 480px) {
 
