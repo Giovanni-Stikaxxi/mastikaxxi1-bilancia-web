@@ -93,7 +93,7 @@ body {
     flex: 1;
 }
 
-/* Testi nelle card (correzione leggibilità) */
+/* Testi nelle card */
 .card p,
 .card span {
     color: #3b2f2f !important;
