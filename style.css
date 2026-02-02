@@ -4,8 +4,8 @@
 
 /* Sfondo generale */
 body {
-    background: #f3e9d2 url('https://i.imgur.com/2u7QFhC.png') repeat;
-    font-family: "Georgia", "Times New Roman", serif;
+    background: #f4efe3 url('https://i.imgur.com/0Zf0FqE.jpg') repeat;
+    font-family: "Georgia", serif;
     color: #3b2f2f;
     margin: 0;
     padding: 0;
@@ -159,3 +159,4 @@ table td {
         font-size: 2.4em;
     }
 }
+
