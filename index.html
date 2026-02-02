@@ -8,6 +8,30 @@
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<style>
+/* Migliorie estetiche */
+.badge {
+    background: #eee;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.9em;
+}
+
+.stato-online {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.stato-offline {
+    color: #E53935;
+    font-weight: bold;
+}
+
+table tbody tr:nth-child(odd) {
+    background: #f7f7f7;
+}
+</style>
+
 </head>
 
 <body>
@@ -97,8 +121,17 @@ async function aggiornaPesoAttuale() {
     const peso = parseFloat(data.field1) / 1000;
     document.getElementById("pesoAttuale").innerText = peso.toFixed(3) + " kg";
 
-    document.getElementById("ultimoAgg").innerText =
-        data.created_at.replace("T", " ").replace("Z", "");
+    const dt = new Date(data.created_at);
+    const oraLocale = dt.toLocaleString("it-IT", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+    document.getElementById("ultimoAgg").innerHTML =
+        `<span class="badge">${oraLocale}</span>`;
 }
 
 // ----------------------
@@ -116,8 +149,25 @@ async function aggiornaVariazione24h() {
 
     const variazione = ultimo - primo;
 
-    document.getElementById("var24h").innerText =
-        (variazione >= 0 ? "+" : "") + variazione.toFixed(3) + " kg";
+    const varElem = document.getElementById("var24h");
+
+    let arrow = "→";
+    let color = "#555";
+
+    if (variazione > 0) {
+        arrow = "↑";
+        color = "#4CAF50";
+    } else if (variazione < 0) {
+        arrow = "↓";
+        color = "#E53935";
+    }
+
+    varElem.innerHTML = `
+        <span style="color:${color}; font-size:1.4em; font-weight:bold;">
+            ${arrow}
+        </span>
+        ${(variazione >= 0 ? "+" : "") + variazione.toFixed(3)} kg
+    `;
 
     if (chartVar) chartVar.destroy();
 
@@ -129,7 +179,7 @@ async function aggiornaVariazione24h() {
             labels: ["24h"],
             datasets: [{
                 data: [variazione],
-                backgroundColor: variazione >= 0 ? "#4CAF50" : "#E53935",
+                backgroundColor: color,
                 borderWidth: 1
             }]
         },
@@ -154,10 +204,14 @@ async function aggiornaStato() {
         const r = await fetch(url);
         const data = await r.json();
 
-        document.getElementById("statoConn").innerText = "Online";
+        document.getElementById("statoConn").innerHTML =
+            `<span class="stato-online">🟢 Online</span>`;
+
         document.getElementById("reteWifi").innerText = data.field3 || "N/D";
+
     } catch {
-        document.getElementById("statoConn").innerText = "Offline";
+        document.getElementById("statoConn").innerHTML =
+            `<span class="stato-offline">🔴 Offline</span>`;
     }
 }
 
@@ -181,7 +235,7 @@ async function aggiornaTabella() {
 }
 
 // ----------------------
-// GRAFICO PRINCIPALE A ISTOGRAMMA
+// GRAFICO PRINCIPALE
 // ----------------------
 async function caricaGrafico(resultsCount) {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=${resultsCount}`;
