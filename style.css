@@ -4,9 +4,9 @@
 
 /* Sfondo generale */
 body {
-    background: #f4efe3 url('https://i.imgur.com/0Zf0FqE.jpg') repeat;
+    background: #1a1a1a url('https://i.imgur.com/6I7ZQYk.png') repeat;
     font-family: "Georgia", serif;
-    color: #3b2f2f;
+    color: #f5f0e6;
     margin: 0;
     padding: 0;
 }
@@ -159,4 +159,5 @@ table td {
         font-size: 2.4em;
     }
 }
+
 
