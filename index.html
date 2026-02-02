@@ -9,7 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-/* Migliorie estetiche */
 .badge {
     background: #eee;
     padding: 4px 8px;
@@ -68,7 +67,7 @@ table tbody tr:nth-child(odd) {
 </div>
 
 <div class="card">
-    <h2>Ultimi 10 Pesi</h2>
+    <h2>Ultimi Pesi</h2>
     <table>
         <thead>
             <tr><th>Ora</th><th>Peso (kg)</th></tr>
@@ -77,7 +76,7 @@ table tbody tr:nth-child(odd) {
     </table>
 </div>
 
-<!-- GRAFICO MATLAB INTEGRATO -->
+<!-- GRAFICO MATLAB -->
 <div class="card">
     <h2>Analisi MATLAB (ThingSpeak)</h2>
     <div class="matlab-container">
@@ -135,7 +134,7 @@ async function aggiornaPesoAttuale() {
 }
 
 // ----------------------
-// VARIAZIONE 24 ORE (VERSIONE PRECISA)
+// VARIAZIONE 24 ORE (PRECISA)
 // ----------------------
 async function aggiornaVariazione24h() {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=300`;
@@ -188,6 +187,7 @@ async function aggiornaVariazione24h() {
         ${(variazione >= 0 ? "+" : "") + variazione.toFixed(3)} kg
     `;
 
+    // Mini grafico
     if (chartVar) chartVar.destroy();
 
     const ctx = document.getElementById("graficoVar24h").getContext("2d");
@@ -215,6 +215,60 @@ async function aggiornaVariazione24h() {
 }
 
 // ----------------------
+// ULTIMI 5 PESI + PESO 24H FA
+// ----------------------
+async function aggiornaTabella() {
+    const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=300`;
+    const r = await fetch(url);
+    const data = await r.json();
+
+    const tbody = document.getElementById("tabellaPesi");
+    tbody.innerHTML = "";
+
+    if (!data.feeds.length) return;
+
+    // Calcolo peso 24h fa
+    const now = new Date();
+    const targetTime = now.getTime() - (24 * 60 * 60 * 1000);
+
+    let peso24h = null;
+    let minDiff = Infinity;
+
+    data.feeds.forEach(f => {
+        if (!f.field1) return;
+
+        const t = new Date(f.created_at).getTime();
+        const diff = Math.abs(t - targetTime);
+
+        if (diff < minDiff) {
+            minDiff = diff;
+            peso24h = {
+                peso: (parseFloat(f.field1) / 1000).toFixed(3),
+                ora: f.created_at.replace("T", " ").replace("Z", "")
+            };
+        }
+    });
+
+    // Aggiungi riga "Peso 24h fa"
+    tbody.innerHTML += `
+        <tr style="background:#ffe9c4;">
+            <td><strong>${peso24h.ora}</strong></td>
+            <td><strong>${peso24h.peso} kg</strong></td>
+        </tr>
+    `;
+
+    // Ultimi 5 pesi
+    const ultimi5 = data.feeds.slice(-5).reverse();
+
+    ultimi5.forEach(f => {
+        const peso = (parseFloat(f.field1) / 1000).toFixed(3);
+        const ora = f.created_at.replace("T", " ").replace("Z", "");
+
+        tbody.innerHTML += `<tr><td>${ora}</td><td>${peso} kg</td></tr>`;
+    });
+}
+
+// ----------------------
 // STATO BILANCIA
 // ----------------------
 async function aggiornaStato() {
@@ -232,25 +286,6 @@ async function aggiornaStato() {
         document.getElementById("statoConn").innerHTML =
             `<span class="stato-offline">🔴 Offline</span>`;
     }
-}
-
-// ----------------------
-// ULTIMI 10 PESI
-// ----------------------
-async function aggiornaTabella() {
-    const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=10`;
-    const r = await fetch(url);
-    const data = await r.json();
-
-    const tbody = document.getElementById("tabellaPesi");
-    tbody.innerHTML = "";
-
-    data.feeds.reverse().forEach(f => {
-        const peso = (parseFloat(f.field1) / 1000).toFixed(3);
-        const ora = f.created_at.replace("T", " ").replace("Z", "");
-
-        tbody.innerHTML += `<tr><td>${ora}</td><td>${peso}</td></tr>`;
-    });
 }
 
 // ----------------------
