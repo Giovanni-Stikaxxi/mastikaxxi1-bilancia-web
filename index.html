@@ -135,19 +135,38 @@ async function aggiornaPesoAttuale() {
 }
 
 // ----------------------
-// VARIAZIONE 24 ORE
+// VARIAZIONE 24 ORE (VERSIONE PRECISA)
 // ----------------------
 async function aggiornaVariazione24h() {
-    const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=96`;
+    const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=300`;
     const r = await fetch(url);
     const data = await r.json();
 
     if (!data.feeds.length) return;
 
-    const primo = parseFloat(data.feeds[0].field1) / 1000;
-    const ultimo = parseFloat(data.feeds[data.feeds.length - 1].field1) / 1000;
+    const now = new Date();
+    const targetTime = now.getTime() - (24 * 60 * 60 * 1000);
 
-    const variazione = ultimo - primo;
+    let peso24h = null;
+    let pesoUltimo = parseFloat(data.feeds[data.feeds.length - 1].field1) / 1000;
+
+    let minDiff = Infinity;
+
+    data.feeds.forEach(f => {
+        if (!f.field1) return;
+
+        const t = new Date(f.created_at).getTime();
+        const diff = Math.abs(t - targetTime);
+
+        if (diff < minDiff) {
+            minDiff = diff;
+            peso24h = parseFloat(f.field1) / 1000;
+        }
+    });
+
+    if (peso24h === null) return;
+
+    const variazione = pesoUltimo - peso24h;
 
     const varElem = document.getElementById("var24h");
 
