@@ -1,12 +1,12 @@
 /* ------------------------------
-   TEMA VINTAGE MIGLIORATO
+   TEMA VINTAGE + SFONDO MINIMAL
 ------------------------------ */
 
-/* Sfondo generale */
+/* Sfondo minimal nero pulito */
 body {
-    background: #0f0f0f; /* nero minimal pulito */
+    background: #0f0f0f;
     font-family: "Georgia", serif;
-    color: #f5f0e6;
+    color: #2b2b2b;
     margin: 0;
     padding: 0;
 }
@@ -44,8 +44,8 @@ body {
     border-radius: 10px;
     padding: 20px;
     margin: 20px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    backdrop-filter: blur(2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    position: relative;
 }
 
 /* Cornice decorativa */
@@ -93,6 +93,23 @@ body {
     flex: 1;
 }
 
+/* Testi nelle card (correzione leggibilità) */
+.card p,
+.card span {
+    color: #3b2f2f !important;
+}
+
+/* Stato bilancia */
+.stato-online {
+    color: #2e7d32 !important;
+    font-weight: bold;
+}
+
+.stato-offline {
+    color: #c62828 !important;
+    font-weight: bold;
+}
+
 /* Tabella vintage */
 table {
     width: 100%;
@@ -104,11 +121,22 @@ table th {
     background: #e8dcc2;
     padding: 10px;
     border-bottom: 2px solid #b89b72;
+    color: #3b2f2f;
 }
 
 table td {
     padding: 8px;
     border-bottom: 1px solid #d8c7a6;
+    color: #3b2f2f !important;
+}
+
+/* Alternanza righe */
+table tbody tr:nth-child(odd) {
+    background: #f0e6d2 !important;
+}
+
+table tbody tr:nth-child(even) {
+    background: #fff8e8 !important;
 }
 
 /* Pulsanti vintage */
@@ -140,6 +168,15 @@ table td {
     box-shadow: inset 0 0 6px rgba(0,0,0,0.1);
 }
 
+/* Correzione grafico schiacciato */
+.chart-container {
+    min-height: 350px !important;
+}
+
+#graficoPeso {
+    height: 300px !important;
+}
+
 /* MATLAB iframe */
 .matlab-frame {
     width: 100%;
@@ -159,7 +196,3 @@ table td {
         font-size: 2.4em;
     }
 }
-
-
-
-
