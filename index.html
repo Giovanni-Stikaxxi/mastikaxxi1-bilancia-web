@@ -149,6 +149,21 @@ table tbody tr:nth-child(even) {
     background: #fff8e8 !important;
 }
 
+/* Badge vintage */
+.badge-vintage {
+    display: inline-block;
+    background: #b89b72;
+    color: #fff8e8;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    font-weight: bold;
+    border: 1px solid #4a3b2f;
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.25);
+    margin-left: 10px;
+    letter-spacing: 0.5px;
+}
+
 /* Pulsanti vintage */
 .btn-group button {
     background: #d8c7a6;
@@ -285,6 +300,7 @@ const readAPIKey = "JQ1UUYT4R4T83V0V";
 
 let chart;
 let chartVar;
+
 /* ----------------------
    PESO ATTUALE
 ---------------------- */
@@ -397,7 +413,7 @@ async function aggiornaVariazione24h() {
 }
 
 /* ----------------------
-   ULTIMI 5 PESI + PESO 24H FA
+   ULTIMI 2 PESI + PESO 24H FA
 ---------------------- */
 async function aggiornaTabella() {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=300`;
@@ -445,23 +461,13 @@ async function aggiornaTabella() {
     ------------------------- */
     const ultimi2 = data.feeds.slice(-2).reverse();
 
-    const badgeStyle = `
-        display:inline-block;
-        background:#b89b72;
-        color:#fff;
-        padding:2px 6px;
-        border-radius:6px;
-        font-size:0.8em;
-        margin-left:8px;
-    `;
-
     if (ultimi2[0]) {
         const peso = (parseFloat(ultimi2[0].field1) / 1000).toFixed(3);
         const ora = ultimi2[0].created_at.replace("T", " ").replace("Z", "");
 
         tbody.innerHTML += `
             <tr>
-                <td>${ora} <span style="${badgeStyle}">Ultimo</span></td>
+                <td>${ora} <span class="badge-vintage">Ultimo</span></td>
                 <td>${peso} kg</td>
             </tr>
         `;
@@ -473,13 +479,12 @@ async function aggiornaTabella() {
 
         tbody.innerHTML += `
             <tr>
-                <td>${ora} <span style="${badgeStyle}">Penultimo</span></td>
+                <td>${ora} <span class="badge-vintage">Penultimo</span></td>
                 <td>${peso} kg</td>
             </tr>
         `;
     }
 }
-
 
 /* ----------------------
    STATO BILANCIA
@@ -541,8 +546,10 @@ async function caricaGrafico(resultsCount) {
                     grid: { color: "rgba(74,59,47,0.3)", borderDash: [4,4] }
                 }
             },
-            plugins: {
-                legend: { labels: { color: "#4a3b2f" } }
+                       plugins: {
+                legend: { 
+                    labels: { color: "#4a3b2f" }
+                }
             }
         }
     });
@@ -556,7 +563,7 @@ function aggiornaDashboard() {
     aggiornaVariazione24h();
     aggiornaStato();
     aggiornaTabella();
-    caricaGrafico(96);
+    caricaGrafico(96); // di default: ultime 24 ore
 }
 
 /* Avvio iniziale */
@@ -569,4 +576,3 @@ setInterval(aggiornaDashboard, 30000);
 
 </body>
 </html>
-
