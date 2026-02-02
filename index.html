@@ -409,6 +409,9 @@ async function aggiornaTabella() {
 
     if (!data.feeds.length) return;
 
+    /* -------------------------
+       1) Peso più vicino a 24h fa
+    ------------------------- */
     const now = new Date();
     const targetTime = now.getTime() - (24 * 60 * 60 * 1000);
 
@@ -437,15 +440,46 @@ async function aggiornaTabella() {
         </tr>
     `;
 
-    const ultimi5 = data.feeds.slice(-5).reverse();
+    /* -------------------------
+       2) Ultimi 2 pesi registrati
+    ------------------------- */
+    const ultimi2 = data.feeds.slice(-2).reverse();
 
-    ultimi5.forEach(f => {
-        const peso = (parseFloat(f.field1) / 1000).toFixed(3);
-        const ora = f.created_at.replace("T", " ").replace("Z", "");
+    const badgeStyle = `
+        display:inline-block;
+        background:#b89b72;
+        color:#fff;
+        padding:2px 6px;
+        border-radius:6px;
+        font-size:0.8em;
+        margin-left:8px;
+    `;
 
-        tbody.innerHTML += `<tr><td>${ora}</td><td>${peso} kg</td></tr>`;
-    });
+    if (ultimi2[0]) {
+        const peso = (parseFloat(ultimi2[0].field1) / 1000).toFixed(3);
+        const ora = ultimi2[0].created_at.replace("T", " ").replace("Z", "");
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${ora} <span style="${badgeStyle}">Ultimo</span></td>
+                <td>${peso} kg</td>
+            </tr>
+        `;
+    }
+
+    if (ultimi2[1]) {
+        const peso = (parseFloat(ultimi2[1].field1) / 1000).toFixed(3);
+        const ora = ultimi2[1].created_at.replace("T", " ").replace("Z", "");
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${ora} <span style="${badgeStyle}">Penultimo</span></td>
+                <td>${peso} kg</td>
+            </tr>
+        `;
+    }
 }
+
 
 /* ----------------------
    STATO BILANCIA
@@ -535,3 +569,4 @@ setInterval(aggiornaDashboard, 30000);
 
 </body>
 </html>
+
