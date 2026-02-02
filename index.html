@@ -5,29 +5,206 @@
 <title>Bilancia 1 - Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-.badge {
-    background: #eee;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 0.9em;
+/* ------------------------------
+   TEMA VINTAGE + SFONDO MINIMAL
+------------------------------ */
+
+/* Sfondo minimal nero pulito */
+body {
+    background: #0f0f0f;
+    font-family: "Georgia", serif;
+    color: #2b2b2b;
+    margin: 0;
+    padding: 0;
 }
 
+/* Header */
+.header-logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+    background: #e8dcc2;
+    border-bottom: 4px solid #b89b72;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+}
+
+.header-logos h1 {
+    font-size: 2.2em;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #4a3b2f;
+    text-shadow: 1px 1px 0 #fff;
+}
+
+.logo {
+    width: 70px;
+    height: auto;
+    filter: sepia(40%);
+}
+
+/* Card vintage */
+.card {
+    background: #fdf7e3;
+    border: 2px solid #c8b28a;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    position: relative;
+}
+
+/* Cornice decorativa */
+.card::before {
+    content: "";
+    position: absolute;
+    border: 1px dashed #b89b72;
+    top: 8px;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    pointer-events: none;
+}
+
+/* Titoli */
+.card h2 {
+    font-size: 1.6em;
+    color: #4a3b2f;
+    border-bottom: 2px solid #b89b72;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+
+/* Valori principali */
+.big-value {
+    font-size: 3em;
+    font-weight: bold;
+    color: #3b2f2f;
+    text-shadow: 1px 1px 0 #fff;
+}
+
+.big-value-small {
+    font-size: 2em;
+    font-weight: bold;
+    color: #3b2f2f;
+}
+
+/* Layout affiancato */
+.row-two {
+    display: flex;
+    gap: 20px;
+}
+
+.col {
+    flex: 1;
+}
+
+/* Testi nelle card */
+.card p,
+.card span {
+    color: #3b2f2f !important;
+}
+
+/* Stato bilancia */
 .stato-online {
-    color: #4CAF50;
+    color: #2e7d32 !important;
     font-weight: bold;
 }
 
 .stato-offline {
-    color: #E53935;
+    color: #c62828 !important;
     font-weight: bold;
 }
 
+/* Tabella vintage */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.1em;
+}
+
+table th {
+    background: #e8dcc2;
+    padding: 10px;
+    border-bottom: 2px solid #b89b72;
+    color: #3b2f2f;
+}
+
+table td {
+    padding: 8px;
+    border-bottom: 1px solid #d8c7a6;
+    color: #3b2f2f !important;
+}
+
+/* Alternanza righe */
 table tbody tr:nth-child(odd) {
-    background: #f7f7f7;
+    background: #f0e6d2 !important;
+}
+
+table tbody tr:nth-child(even) {
+    background: #fff8e8 !important;
+}
+
+/* Pulsanti vintage */
+.btn-group button {
+    background: #d8c7a6;
+    border: 2px solid #b89b72;
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 6px;
+    font-size: 1em;
+    cursor: pointer;
+    color: #3b2f2f;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.btn-group button:hover {
+    background: #b89b72;
+    color: #fff;
+}
+
+/* Grafici */
+.chart-container,
+.chart-container-small {
+    background: #fff8e8;
+    border: 2px solid #c8b28a;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.1);
+}
+
+/* Correzione grafico schiacciato */
+.chart-container {
+    min-height: 350px !important;
+}
+
+#graficoPeso {
+    height: 300px !important;
+}
+
+/* MATLAB iframe */
+.matlab-frame {
+    width: 100%;
+    height: 400px;
+    border: 2px solid #b89b72;
+    border-radius: 10px;
+    background: #fff8e8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .row-two {
+        flex-direction: column;
+    }
+
+    .big-value {
+        font-size: 2.4em;
+    }
 }
 </style>
 
@@ -98,7 +275,7 @@ table tbody tr:nth-child(odd) {
     </div>
 
     <div class="chart-container">
-        <canvas id="graficoPeso" height="100"></canvas>
+        <canvas id="graficoPeso"></canvas>
     </div>
 </div>
 
@@ -108,10 +285,9 @@ const readAPIKey = "JQ1UUYT4R4T83V0V";
 
 let chart;
 let chartVar;
-
-// ----------------------
-// PESO ATTUALE
-// ----------------------
+/* ----------------------
+   PESO ATTUALE
+---------------------- */
 async function aggiornaPesoAttuale() {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1/last.json?api_key=${readAPIKey}`;
     const r = await fetch(url);
@@ -133,9 +309,9 @@ async function aggiornaPesoAttuale() {
         `<span class="badge">${oraLocale}</span>`;
 }
 
-// ----------------------
-// VARIAZIONE 24 ORE (PRECISA)
-// ----------------------
+/* ----------------------
+   VARIAZIONE 24 ORE PRECISA
+---------------------- */
 async function aggiornaVariazione24h() {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=300`;
     const r = await fetch(url);
@@ -170,14 +346,14 @@ async function aggiornaVariazione24h() {
     const varElem = document.getElementById("var24h");
 
     let arrow = "→";
-    let color = "#555";
+    let color = "#4a3b2f";
 
     if (variazione > 0) {
         arrow = "↑";
-        color = "#4CAF50";
+        color = "#6b8e23"; // verde oliva vintage
     } else if (variazione < 0) {
         arrow = "↓";
-        color = "#E53935";
+        color = "#b03a2e"; // rosso mattone vintage
     }
 
     varElem.innerHTML = `
@@ -187,7 +363,6 @@ async function aggiornaVariazione24h() {
         ${(variazione >= 0 ? "+" : "") + variazione.toFixed(3)} kg
     `;
 
-    // Mini grafico
     if (chartVar) chartVar.destroy();
 
     const ctx = document.getElementById("graficoVar24h").getContext("2d");
@@ -199,7 +374,8 @@ async function aggiornaVariazione24h() {
             datasets: [{
                 data: [variazione],
                 backgroundColor: color,
-                borderWidth: 1
+                borderColor: "#4a3b2f",
+                borderWidth: 2
             }]
         },
         options: {
@@ -207,16 +383,22 @@ async function aggiornaVariazione24h() {
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-                x: { ticks: { color: "#444" } },
-                y: { ticks: { color: "#444" } }
+                x: {
+                    ticks: { color: "#4a3b2f" },
+                    grid: { color: "rgba(74,59,47,0.3)", borderDash: [4,4] }
+                },
+                y: {
+                    ticks: { color: "#4a3b2f" },
+                    grid: { color: "rgba(74,59,47,0.3)", borderDash: [4,4] }
+                }
             }
         }
     });
 }
 
-// ----------------------
-// ULTIMI 5 PESI + PESO 24H FA
-// ----------------------
+/* ----------------------
+   ULTIMI 5 PESI + PESO 24H FA
+---------------------- */
 async function aggiornaTabella() {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=300`;
     const r = await fetch(url);
@@ -227,7 +409,6 @@ async function aggiornaTabella() {
 
     if (!data.feeds.length) return;
 
-    // Calcolo peso 24h fa
     const now = new Date();
     const targetTime = now.getTime() - (24 * 60 * 60 * 1000);
 
@@ -249,7 +430,6 @@ async function aggiornaTabella() {
         }
     });
 
-    // Aggiungi riga "Peso 24h fa"
     tbody.innerHTML += `
         <tr style="background:#ffe9c4;">
             <td><strong>${peso24h.ora}</strong></td>
@@ -257,7 +437,6 @@ async function aggiornaTabella() {
         </tr>
     `;
 
-    // Ultimi 5 pesi
     const ultimi5 = data.feeds.slice(-5).reverse();
 
     ultimi5.forEach(f => {
@@ -268,9 +447,9 @@ async function aggiornaTabella() {
     });
 }
 
-// ----------------------
-// STATO BILANCIA
-// ----------------------
+/* ----------------------
+   STATO BILANCIA
+---------------------- */
 async function aggiornaStato() {
     try {
         const url = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
@@ -288,9 +467,9 @@ async function aggiornaStato() {
     }
 }
 
-// ----------------------
-// GRAFICO PRINCIPALE
-// ----------------------
+/* ----------------------
+   GRAFICO PRINCIPALE
+---------------------- */
 async function caricaGrafico(resultsCount) {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=${resultsCount}`;
     const r = await fetch(url);
@@ -310,28 +489,34 @@ async function caricaGrafico(resultsCount) {
             datasets: [{
                 label: "Peso (kg)",
                 data: valori,
-                backgroundColor: "#4CAF50",
-                borderColor: "#388E3C",
-                borderWidth: 1
+                backgroundColor: "rgba(184, 155, 114, 0.85)",
+                borderColor: "#4a3b2f",
+                borderWidth: 2
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { ticks: { color: "#444" } },
-                y: { ticks: { color: "#444" } }
+                x: {
+                    ticks: { color: "#4a3b2f" },
+                    grid: { color: "rgba(74,59,47,0.3)", borderDash: [4,4] }
+                },
+                y: {
+                    ticks: { color: "#4a3b2f" },
+                    grid: { color: "rgba(74,59,47,0.3)", borderDash: [4,4] }
+                }
             },
             plugins: {
-                legend: { labels: { color: "#444" } }
+                legend: { labels: { color: "#4a3b2f" } }
             }
         }
     });
 }
 
-// ----------------------
-// AGGIORNAMENTO AUTOMATICO
-// ----------------------
+/* ----------------------
+   AGGIORNAMENTO AUTOMATICO
+---------------------- */
 function aggiornaDashboard() {
     aggiornaPesoAttuale();
     aggiornaVariazione24h();
@@ -340,8 +525,12 @@ function aggiornaDashboard() {
     caricaGrafico(96);
 }
 
+/* Avvio iniziale */
 aggiornaDashboard();
+
+/* Aggiornamento ogni 30 secondi */
 setInterval(aggiornaDashboard, 30000);
+
 </script>
 
 </body>
