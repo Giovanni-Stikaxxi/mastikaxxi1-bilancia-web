@@ -6,13 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
 <style>
 /* ------------------------------
    TEMA VINTAGE + SFONDO MINIMAL
 ------------------------------ */
 
-/* Sfondo minimal nero pulito */
 body {
     background: #0f0f0f;
     font-family: "Georgia", serif;
@@ -103,7 +103,7 @@ body {
     flex: 1;
 }
 
-/* Testi nelle card */
+/* Testi */
 .card p,
 .card span {
     color: #3b2f2f !important;
@@ -120,7 +120,7 @@ body {
     font-weight: bold;
 }
 
-/* Tabella vintage */
+/* Tabella */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -140,7 +140,6 @@ table td {
     color: #3b2f2f !important;
 }
 
-/* Alternanza righe */
 table tbody tr:nth-child(odd) {
     background: #f0e6d2 !important;
 }
@@ -149,7 +148,7 @@ table tbody tr:nth-child(even) {
     background: #fff8e8 !important;
 }
 
-/* Badge vintage */
+/* Badge */
 .badge-vintage {
     display: inline-block;
     background: #b89b72;
@@ -164,7 +163,7 @@ table tbody tr:nth-child(even) {
     letter-spacing: 0.5px;
 }
 
-/* Pulsanti vintage */
+/* Pulsanti */
 .btn-group button {
     background: #d8c7a6;
     border: 2px solid #b89b72;
@@ -184,17 +183,12 @@ table tbody tr:nth-child(even) {
 }
 
 /* Grafici */
-.chart-container,
-.chart-container-small {
+.chart-container {
     background: #fff8e8;
     border: 2px solid #c8b28a;
     border-radius: 8px;
     padding: 10px;
     box-shadow: inset 0 0 6px rgba(0,0,0,0.1);
-}
-
-/* Correzione grafico schiacciato */
-.chart-container {
     min-height: 350px !important;
 }
 
@@ -216,7 +210,6 @@ table tbody tr:nth-child(even) {
     .row-two {
         flex-direction: column;
     }
-
     .big-value {
         font-size: 2.4em;
     }
@@ -233,9 +226,8 @@ table tbody tr:nth-child(even) {
     <img src="logo.png" class="logo">
 </div>
 
-<!-- CARD CON PESO E VARIAZIONE AFFIANCATI -->
+<!-- CARD CON PESO E VARIAZIONE -->
 <div class="card row-two">
-    
     <div class="col">
         <h2>Peso Attuale</h2>
         <div id="pesoAttuale" class="big-value">--.- kg</div>
@@ -248,7 +240,6 @@ table tbody tr:nth-child(even) {
             <canvas id="graficoVar24h"></canvas>
         </div>
     </div>
-
 </div>
 
 <div class="card">
@@ -268,26 +259,17 @@ table tbody tr:nth-child(even) {
     </table>
 </div>
 
-<!-- GRAFICO MATLAB -->
 <div class="card">
     <h2>Analisi MATLAB (ThingSpeak)</h2>
-    <div class="matlab-container">
-        <iframe 
-            src="https://thingspeak.mathworks.com/apps/matlab_visualizations/646817"
-            class="matlab-frame"
-            loading="lazy">
-        </iframe>
-    </div>
+    <iframe 
+        src="https://thingspeak.mathworks.com/apps/matlab_visualizations/646817"
+        class="matlab-frame"
+        loading="lazy">
+    </iframe>
 </div>
 
 <div class="card">
-    <h2>Storico Peso</h2>
-
-    <div class="btn-group">
-        <button onclick="caricaGrafico(96)">Ultime 24 ore</button>
-        <button onclick="caricaGrafico(672)">Ultimi 7 giorni</button>
-        <button onclick="caricaGrafico(2880)">Ultimi 30 giorni</button>
-    </div>
+    <h2>Storico Peso (Ultime 24 ore reali)</h2>
 
     <div class="chart-container">
         <canvas id="graficoPeso"></canvas>
@@ -300,7 +282,7 @@ const readAPIKey = "JQ1UUYT4R4T83V0V";
 
 let chart;
 let chartVar;
-    
+   
 /* ----------------------
    PESO ATTUALE
 ---------------------- */
@@ -322,11 +304,11 @@ async function aggiornaPesoAttuale() {
     });
 
     document.getElementById("ultimoAgg").innerHTML =
-        `<span class="badge">${oraLocale}</span>`;
+        `<span class="badge-vintage">${oraLocale}</span>`;
 }
 
 /* ----------------------
-   VARIAZIONE 24 ORE PRECISA
+   VARIAZIONE 24 ORE
 ---------------------- */
 async function aggiornaVariazione24h() {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=300`;
@@ -366,10 +348,10 @@ async function aggiornaVariazione24h() {
 
     if (variazione > 0) {
         arrow = "↑";
-        color = "#6b8e23"; // verde oliva vintage
+        color = "#6b8e23";
     } else if (variazione < 0) {
         arrow = "↓";
-        color = "#b03a2e"; // rosso mattone vintage
+        color = "#b03a2e";
     }
 
     varElem.innerHTML = `
@@ -413,7 +395,7 @@ async function aggiornaVariazione24h() {
 }
 
 /* ----------------------
-   ULTIMI 2 PESI + PESO 24H FA
+   ULTIMI PESI
 ---------------------- */
 async function aggiornaTabella() {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=300`;
@@ -425,9 +407,6 @@ async function aggiornaTabella() {
 
     if (!data.feeds.length) return;
 
-    /* -------------------------
-       1) Peso più vicino a 24h fa
-    ------------------------- */
     const now = new Date();
     const targetTime = now.getTime() - (24 * 60 * 60 * 1000);
 
@@ -456,9 +435,6 @@ async function aggiornaTabella() {
         </tr>
     `;
 
-    /* -------------------------
-       2) Ultimi 2 pesi registrati
-    ------------------------- */
     const ultimi2 = data.feeds.slice(-2).reverse();
 
     if (ultimi2[0]) {
@@ -507,7 +483,7 @@ async function aggiornaStato() {
 }
 
 /* ----------------------
-   GRAFICO PRINCIPALE
+   GRAFICO A — LINEARE, TEMPO REALE
 ---------------------- */
 async function caricaGrafico() {
     const url = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}&results=500`;
@@ -517,32 +493,12 @@ async function caricaGrafico() {
     const now = new Date();
     const cutoff = now.getTime() - (24 * 60 * 60 * 1000);
 
-    // Filtra solo i dati delle ultime 24 ore
     const dati24h = data.feeds
         .filter(f => f.field1 && new Date(f.created_at).getTime() >= cutoff)
         .map(f => ({
             x: new Date(f.created_at),
             y: parseFloat(f.field1) / 1000
         }));
-
-    // Se non ci sono dati, evita errori
-    if (dati24h.length === 0) {
-        if (chart) chart.destroy();
-        const ctx = document.getElementById("graficoPeso").getContext("2d");
-        chart = new Chart(ctx, {
-            type: "line",
-            data: { datasets: [] },
-            options: {
-                plugins: {
-                    title: {
-                        display: true,
-                        text: "Nessun dato nelle ultime 24 ore"
-                    }
-                }
-            }
-        });
-        return;
-    }
 
     if (chart) chart.destroy();
 
@@ -587,7 +543,6 @@ async function caricaGrafico() {
     });
 }
 
-
 /* ----------------------
    AGGIORNAMENTO AUTOMATICO
 ---------------------- */
@@ -596,7 +551,7 @@ function aggiornaDashboard() {
     aggiornaVariazione24h();
     aggiornaStato();
     aggiornaTabella();
-    caricaGrafico(96); // di default: ultime 24 ore
+    caricaGrafico();
 }
 
 /* Avvio iniziale */
@@ -609,5 +564,3 @@ setInterval(aggiornaDashboard, 30000);
 
 </body>
 </html>
-
-            
